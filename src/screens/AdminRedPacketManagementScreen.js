@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,22 +7,12 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import redPacketApi from '../services/redPacketApi';
 
 const isWeb = Platform.OS === 'web';
-
-const MOCK_DATA = Array.from({ length: 20 }, (_, i) => ({
-  _id: `rp_${i + 1}`,
-  title: `春节红包活动 ${i + 1}`,
-  type: i % 2 === 0 ? 'random' : 'fixed',
-  totalAmount: (i + 1) * 10000,
-  totalCount: 100 * (i + 1),
-  remainingCount: Math.floor(100 * (i + 1) * (1 - i * 0.05)),
-  remainingAmount: Math.floor((i + 1) * 10000 * (1 - i * 0.05)),
-  status: ['draft', 'active', 'paused', 'expired', 'finished'][i % 5],
-  createdAt: new Date(Date.now() - i * 86400000).toISOString(),
-  claimRate: ((100 - i * 5) / 100).toFixed(2),
-}));
 
 const STATUS_CONFIG = {
   draft: { label: '草稿', color: '#8E8E93', bgColor: '#F2F2F7' },
@@ -39,12 +29,57 @@ const AdminRedPacketManagementScreen = ({ navigation }) => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [data, setData] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [batchLoading, setBatchLoading] = useState(false);
 
-  const filteredData = MOCK_DATA.filter(item => {
-    const matchSearch = item.title.toLowerCase().includes(searchText.toLowerCase());
-    const matchStatus = statusFilter === 'all' || item.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  const loadData = useCallback(async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      const response = await redPacketApi.getList({
+        keyword: searchText || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        page,
+        limit: 20,
+      });
+
+      if (response.success) {
+        setData(response.data.redPackets || []);
+        setTotal(response.data.pagination?.total || 0);
+      } else {
+        console.error('加载数据失败:', response.message);
+        if (!isRefresh) {
+          setData([]);
+          setTotal(0);
+        }
+      }
+    } catch (error) {
+      console.error('请求失败:', error);
+      Alert.alert('错误', '网络请求失败，请检查网络连接');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [searchText, statusFilter, page]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPage(1);
+      loadData();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchText, statusFilter]);
 
   const toggleSelect = (id) => {
     setSelectedItems(prev =>
@@ -53,16 +88,205 @@ const AdminRedPacketManagementScreen = ({ navigation }) => {
   };
 
   const toggleSelectAll = () => {
-    if (selectedItems.length === filteredData.length) {
+    if (selectedItems.length === data.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(filteredData.map(item => item._id));
+      setSelectedItems(data.map(item => item._id || item.id));
     }
   };
 
   const formatAmount = (amount) => {
-    return `¥${(amount / 100).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
+    return `¥${Number(amount).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
   };
+
+  const handleBatchActivate = async () => {
+    if (selectedItems.length === 0) return;
+
+    Alert.alert(
+      '批量启用',
+      `确定要启用选中的 ${selectedItems.length} 个红包吗？`,
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '确定',
+          onPress: async () => {
+            setBatchLoading(true);
+            try {
+              const response = await redPacketApi.batchActivate(selectedItems);
+              if (response.success) {
+                Alert.alert('成功', `已成功启用 ${selectedItems.length} 个红包`);
+                setSelectedItems([]);
+                loadData(true);
+              } else {
+                Alert.alert('失败', response.message || '操作失败');
+              }
+            } catch (error) {
+              Alert.alert('错误', '网络请求失败');
+            } finally {
+              setBatchLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleBatchDeactivate = async () => {
+    if (selectedItems.length === 0) return;
+
+    Alert.alert(
+      '批量禁用',
+      `确定要禁用选中的 ${selectedItems.length} 个红包吗？`,
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '确定',
+          onPress: async () => {
+            setBatchLoading(true);
+            try {
+              const response = await redPacketApi.batchDeactivate(selectedItems);
+              if (response.success) {
+                Alert.alert('成功', `已成功禁用 ${selectedItems.length} 个红包`);
+                setSelectedItems([]);
+                loadData(true);
+              } else {
+                Alert.alert('失败', response.message || '操作失败');
+              }
+            } catch (error) {
+              Alert.alert('错误', '网络请求失败');
+            } finally {
+              setBatchLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedItems.length === 0) return;
+
+    Alert.alert(
+      '批量删除',
+      `确定要删除选中的 ${selectedItems.length} 个红包吗？此操作不可恢复！`,
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '确定删除',
+          style: 'destructive',
+          onPress: async () => {
+            setBatchLoading(true);
+            try {
+              const response = await redPacketApi.batchDelete(selectedItems);
+              if (response.success) {
+                Alert.alert('成功', `已成功删除 ${selectedItems.length} 个红包`);
+                setSelectedItems([]);
+                loadData(true);
+              } else {
+                Alert.alert('失败', response.message || '操作失败');
+              }
+            } catch (error) {
+              Alert.alert('错误', '网络请求失败');
+            } finally {
+              setBatchLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleExport = () => {
+    navigation.navigate('AdminRedPacketExport', {
+      selectedIds: selectedItems,
+    });
+  };
+
+  const handleViewDetail = (item) => {
+    navigation.navigate('AdminRedPacketDashboard', {
+      id: item._id || item.id,
+    });
+  };
+
+  const handlePublish = (item) => {
+    Alert.alert(
+      '发布确认',
+      `确定要发布「${item.title}」吗？发布后红包将立即生效。`,
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '确定发布',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              const response = await redPacketApi.publish(item._id || item.id);
+              if (response.success) {
+                Alert.alert('成功', '红包已成功发布！');
+                loadData(true);
+              } else {
+                Alert.alert('失败', response.message || '发布失败');
+              }
+            } catch (error) {
+              Alert.alert('错误', '网络请求失败');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handlePause = (item) => {
+    Alert.alert(
+      '暂停确认',
+      `确定要暂停「${item.title}」吗？暂停后用户将无法领取。`,
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '确定暂停',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              const response = await redPacketApi.update(item._id || item.id, {
+                status: 'paused',
+              });
+              if (response.success) {
+                Alert.alert('成功', '红包已暂停');
+                loadData(true);
+              } else {
+                Alert.alert('失败', response.message || '操作失败');
+              }
+            } catch (error) {
+              Alert.alert('错误', '网络请求失败');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.maxWidthContainer}>
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+              <Text style={styles.backIcon}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>红包管理</Text>
+            <View style={{ width: 36 }} />
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingText}>加载中...</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -90,6 +314,16 @@ const AdminRedPacketManagementScreen = ({ navigation }) => {
           style={styles.content}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            Platform.OS === 'web' ? null : (
+              require('react-native').default?.RefreshControl ? (
+                <require('react-native').default.RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={() => loadData(true)}
+                />
+              ) : null
+            ) : null
+          }
         >
           {/* Search Bar */}
           <View style={styles.searchContainer}>
@@ -99,6 +333,7 @@ const AdminRedPacketManagementScreen = ({ navigation }) => {
               value={searchText}
               onChangeText={setSearchText}
               placeholderTextColor="#999"
+              onSubmitEditing={() => setPage(1)}
             />
           </View>
 
@@ -137,16 +372,37 @@ const AdminRedPacketManagementScreen = ({ navigation }) => {
                 已选 {selectedItems.length} 项
               </Text>
               <View style={styles.batchActionButtons}>
-                <TouchableOpacity style={[styles.batchBtn, styles.enableBtn]}>
-                  <Text style={[styles.batchBtnText, styles.enableBtnText]}>批量启用</Text>
+                <TouchableOpacity
+                  style={[styles.batchBtn, styles.enableBtn]}
+                  onPress={handleBatchActivate}
+                  disabled={batchLoading}
+                >
+                  <Text style={[styles.batchBtnText, styles.enableBtnText]}>
+                    {batchLoading ? '处理中...' : '批量启用'}
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.batchBtn, styles.disableBtn]}>
-                  <Text style={[styles.batchBtnText, styles.disableBtnText]}>批量禁用</Text>
+                <TouchableOpacity
+                  style={[styles.batchBtn, styles.disableBtn]}
+                  onPress={handleBatchDeactivate}
+                  disabled={batchLoading}
+                >
+                  <Text style={[styles.batchBtnText, styles.disableBtnText]}>
+                    {batchLoading ? '处理中...' : '批量禁用'}
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.batchBtn, styles.deleteBtn]}>
-                  <Text style={[styles.batchBtnText, styles.deleteBtnText]}>批量删除</Text>
+                <TouchableOpacity
+                  style={[styles.batchBtn, styles.deleteBtn]}
+                  onPress={handleBatchDelete}
+                  disabled={batchLoading}
+                >
+                  <Text style={[styles.batchBtnText, styles.deleteBtnText]}>
+                    {batchLoading ? '处理中...' : '批量删除'}
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.batchBtn, styles.exportBtn]}>
+                <TouchableOpacity
+                  style={[styles.batchBtn, styles.exportBtn]}
+                  onPress={handleExport}
+                >
                   <Text style={[styles.batchBtnText, styles.exportBtnText]}>导出</Text>
                 </TouchableOpacity>
               </View>
@@ -159,52 +415,51 @@ const AdminRedPacketManagementScreen = ({ navigation }) => {
               <View
                 style={[
                   styles.checkboxInner,
-                  selectedItems.length === filteredData.length &&
-                    filteredData.length > 0 &&
+                  selectedItems.length === data.length &&
+                    data.length > 0 &&
                     styles.checkboxChecked,
                 ]}
               >
-                {selectedItems.length === filteredData.length &&
-                  filteredData.length > 0 && (
+                {selectedItems.length === data.length &&
+                  data.length > 0 && (
                     <Text style={styles.checkmark}>✓</Text>
                   )}
               </View>
             </TouchableOpacity>
             <Text style={styles.selectAllText}>全选</Text>
-            <Text style={styles.totalCount}>共 {filteredData.length} 条</Text>
+            <Text style={styles.totalCount}>共 {total} 条</Text>
           </View>
 
           {/* Data List */}
-          {filteredData.length === 0 ? (
+          {data.length === 0 && !loading ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📭</Text>
               <Text style={styles.emptyText}>暂无红包数据</Text>
               <Text style={styles.emptySubText}>点击右上角 + 创建第一个红包活动</Text>
             </View>
           ) : (
-            filteredData.map((item) => {
+            data.map((item) => {
               const statusConfig = STATUS_CONFIG[item.status] || STATUS_CONFIG.draft;
+              const itemId = item._id || item.id;
               return (
                 <TouchableOpacity
-                  key={item._id}
+                  key={itemId}
                   style={styles.card}
-                  onPress={() =>
-                    navigation.navigate('AdminRedPacketDashboard', { id: item._id })
-                  }
+                  onPress={() => handleViewDetail(item)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.cardHeader}>
                     <TouchableOpacity
-                      onPress={() => toggleSelect(item._id)}
+                      onPress={() => toggleSelect(itemId)}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                       <View
                         style={[
                           styles.checkbox,
-                          selectedItems.includes(item._id) && styles.checkboxChecked,
+                          selectedItems.includes(itemId) && styles.checkboxChecked,
                         ]}
                       >
-                        {selectedItems.includes(item._id) && (
+                        {selectedItems.includes(itemId) && (
                           <Text style={styles.checkmark}>✓</Text>
                         )}
                       </View>
@@ -239,31 +494,49 @@ const AdminRedPacketManagementScreen = ({ navigation }) => {
                     <View style={styles.statItem}>
                       <Text style={styles.statLabel}>已领/总数</Text>
                       <Text style={styles.statValue}>
-                        {item.totalCount - item.remainingCount}/{item.totalCount}
+                        {(item.totalCount - item.remainingCount) || item.claimedCount || 0}/{item.totalCount || 0}
                       </Text>
                     </View>
                     <View style={styles.statDivider} />
                     <View style={styles.statItem}>
                       <Text style={styles.statLabel}>领取率</Text>
                       <Text style={[styles.statValue, { color: '#007AFF' }]}>
-                        {(item.claimRate * 100).toFixed(1)}%
+                        {item.claimRate ? (item.claimRate * 100).toFixed(1) : '0.0'}%
                       </Text>
                     </View>
                   </View>
 
                   <View style={styles.cardFooter}>
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleViewDetail(item);
+                      }}
+                    >
                       <Text style={styles.actionButtonText}>查看详情</Text>
                     </TouchableOpacity>
                     {item.status === 'draft' && (
-                      <TouchableOpacity style={[styles.actionButton, styles.primaryActionButton]}>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.primaryActionButton]}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handlePublish(item);
+                        }}
+                      >
                         <Text style={[styles.actionButtonText, styles.primaryActionText]}>
                           发布
                         </Text>
                       </TouchableOpacity>
                     )}
                     {item.status === 'active' && (
-                      <TouchableOpacity style={[styles.actionButton, styles.warningActionButton]}>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.warningActionButton]}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handlePause(item);
+                        }}
+                      >
                         <Text style={[styles.actionButtonText, styles.warningActionText]}>
                           暂停
                         </Text>
@@ -276,12 +549,12 @@ const AdminRedPacketManagementScreen = ({ navigation }) => {
           )}
 
           {/* Pagination */}
-          {filteredData.length > 0 && (
+          {total > 20 && (
             <View style={styles.pagination}>
               <TouchableOpacity
                 style={[styles.pageButton, page <= 1 && styles.pageButtonDisabled]}
-                disabled={page <= 1}
-                onPress={() => setPage(p => p - 1)}
+                disabled={page <= 1 || loading}
+                onPress={() => setPage(p => Math.max(1, p - 1))}
               >
                 <Text
                   style={[
@@ -293,20 +566,20 @@ const AdminRedPacketManagementScreen = ({ navigation }) => {
                 </Text>
               </TouchableOpacity>
               <Text style={styles.pageInfo}>
-                第 {page} 页 / 共 {Math.ceil(filteredData.length / 20) || 1} 页
+                第 {page} 页 / 共 {Math.ceil(total / 20)} 页
               </Text>
               <TouchableOpacity
                 style={[
                   styles.pageButton,
-                  page >= Math.ceil(filteredData.length / 20) && styles.pageButtonDisabled,
+                  page >= Math.ceil(total / 20) && styles.pageButtonDisabled,
                 ]}
-                disabled={page >= Math.ceil(filteredData.length / 20)}
+                disabled={page >= Math.ceil(total / 20) || loading}
                 onPress={() => setPage(p => p + 1)}
               >
                 <Text
                   style={[
                     styles.pageButtonText,
-                    page >= Math.ceil(filteredData.length / 20) && styles.pageButtonTextDisabled,
+                    page >= Math.ceil(total / 20) && styles.pageButtonTextDisabled,
                   ]}
                 >
                   下一页 ›
@@ -384,6 +657,17 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 80,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 100,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#64748B',
   },
   searchContainer: {
     marginBottom: 12,

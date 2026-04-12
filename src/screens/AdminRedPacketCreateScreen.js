@@ -7,7 +7,10 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import redPacketApi from '../services/redPacketApi';
 
 const isWeb = Platform.OS === 'web';
 
@@ -37,6 +40,8 @@ const AdminRedPacketCreateScreen = ({ navigation, route }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   const validateStep = (step) => {
     const newErrors = {};
@@ -77,13 +82,113 @@ const AdminRedPacketCreateScreen = ({ navigation, route }) => {
     if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
-  const handleSaveDraft = () => {
-    alert('草稿已保存！');
+  const handleSaveDraft = async () => {
+    if (!validateStep(0)) {
+      Alert.alert('提示', '请先完善基本信息');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const draftData = {
+        title: formData.title,
+        description: formData.description,
+        type: formData.type,
+        totalAmount: Number(formData.totalAmount),
+        totalCount: Number(formData.totalCount),
+        minAmount: formData.minAmount ? Number(formData.minAmount) : undefined,
+        validityType: formData.validityType,
+        status: 'draft',
+      };
+
+      const response = await redPacketApi.create(draftData);
+
+      if (response.success) {
+        Alert.alert('成功', '草稿保存成功！', [
+          { text: '确定', onPress: () => navigation.goBack() }
+        ]);
+      } else {
+        Alert.alert('失败', response.message || '保存失败，请重试');
+      }
+    } catch (error) {
+      console.error('保存草稿失败:', error);
+      Alert.alert('错误', '网络请求失败，请检查网络连接');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handlePublish = () => {
-    alert('红包活动已发布！\n\n' + JSON.stringify(formData, null, 2));
-    navigation.goBack();
+  const handlePublish = async () => {
+    for (let i = 0; i < STEPS.length; i++) {
+      if (!validateStep(i)) {
+        Alert.alert('提示', `请先完善第${i + 1}步：${STEPS[i]}的信息`);
+        setCurrentStep(i);
+        return;
+      }
+    }
+
+    setPublishing(true);
+    try {
+      const createData = {
+        title: formData.title,
+        description: formData.description,
+        type: formData.type,
+        totalAmount: Number(formData.totalAmount),
+        totalCount: Number(formData.totalCount),
+        minAmount: formData.minAmount ? Number(formData.minAmount) : undefined,
+        validityType: formData.validityType,
+        triggerConfig: {
+          triggerType: formData.triggerType,
+          ...(formData.triggerType === 'watch_video' && {
+            watchVideoConfig: {
+              requiredDuration: Number(formData.requiredDuration)
+            }
+          }),
+        },
+        claimRules: {
+          maxClaimsPerUser: Number(formData.maxClaimsPerUser),
+          frequencyLimits: {
+            daily: Number(formData.dailyLimit),
+            weekly: Number(formData.weeklyLimit),
+            monthly: Number(formData.monthlyLimit),
+          },
+          levelRestrictions: {
+            enabled: formData.levelRestrictionEnabled,
+            vipOnly: formData.vipOnly,
+          },
+        },
+      };
+
+      const createResponse = await redPacketApi.create(createData);
+
+      if (createResponse.success) {
+        const redPacketId = createResponse.data._id || createResponse.data.id;
+
+        const publishResponse = await redPacketApi.publish(redPacketId);
+
+        if (publishResponse.success) {
+          Alert.alert(
+            '🎉 发布成功',
+            '红包活动已成功发布并生效！',
+            [
+              { text: '查看列表', onPress: () => navigation.goBack() },
+              { text: '查看详情', onPress: () => navigation.replace('AdminRedPacketDashboard', { id: redPacketId }) }
+            ]
+          );
+        } else {
+          Alert.alert('部分成功', `红包已创建但发布失败：${publishResponse.message}\n\n您可以稍后在列表页手动发布。`, [
+            { text: '确定', onPress: () => navigation.goBack() }
+          ]);
+        }
+      } else {
+        Alert.alert('失败', createResponse.message || '创建失败，请重试');
+      }
+    } catch (error) {
+      console.error('发布失败:', error);
+      Alert.alert('错误', '网络请求失败，请检查网络连接');
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const updateField = (field, value) => {
@@ -333,11 +438,11 @@ const AdminRedPacketCreateScreen = ({ navigation, route }) => {
         
         <View style={styles.row}>
           <View style={[styles.fieldGroup, { flex: 1, marginRight: 10 }]}>
-            <Text style={styles.label">每日上限</Text>
+            <Text style={styles.label}>每日上限</Text>
             <TextInput
               style={styles.input}
               value={String(formData.dailyLimit)}
-              onChange={(v) => updateField('dailyLimit', Number(v))}
+              onChangeText={(v) => updateField('dailyLimit', Number(v))}
               keyboardType="numeric"
             />
           </View>
@@ -347,7 +452,7 @@ const AdminRedPacketCreateScreen = ({ navigation, route }) => {
             <TextInput
               style={styles.input}
               value={String(formData.weeklyLimit)}
-              onChange={(v) => updateField('weeklyLimit', Number(v))}
+              onChangeText={(v) => updateField('weeklyLimit', Number(v))}
               keyboardType="numeric"
             />
           </View>
@@ -357,7 +462,7 @@ const AdminRedPacketCreateScreen = ({ navigation, route }) => {
             <TextInput
               style={styles.input}
               value={String(formData.monthlyLimit)}
-              onChange={(v) => updateField('monthlyLimit', Number(v))}
+              onChangeText={(v) => updateField('monthlyLimit', Number(v))}
               keyboardType="numeric"
             />
           </View>
@@ -429,7 +534,7 @@ const AdminRedPacketCreateScreen = ({ navigation, route }) => {
         
         <View style={styles.summaryItem}>
           <Text style={styles.summaryLabel}>有效期</Text>
-          <Text style={styles.summaryValue">
+          <Text style={styles.summaryValue}>
             {formData.validityType === '24h' ? '24小时' :
              formData.validityType === '7d' ? '7天' :
              formData.validityType === '30d' ? '30天' : `${formData.validityDays}天`}
@@ -455,8 +560,16 @@ const AdminRedPacketCreateScreen = ({ navigation, route }) => {
             <Text style={styles.backIcon}>‹</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>创建红包</Text>
-          <TouchableOpacity style={styles.saveButton} onPress={handleSaveDraft}>
-            <Text style={styles.saveButtonText}>保存草稿</Text>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleSaveDraft}
+            disabled={saving}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="#007AFF" />
+            ) : (
+              <Text style={styles.saveButtonText}>保存草稿</Text>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -482,10 +595,15 @@ const AdminRedPacketCreateScreen = ({ navigation, route }) => {
           <TouchableOpacity
             style={[styles.nextButton, currentStep === STEPS.length - 1 && styles.publishButton]}
             onPress={handleNext}
+            disabled={saving || publishing}
           >
-            <Text style={styles.nextButtonText}>
-              {currentStep === STEPS.length - 1 ? '确认发布' : '下一步'}
-            </Text>
+            {publishing ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.nextButtonText}>
+                {currentStep === STEPS.length - 1 ? '确认发布' : '下一步'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
