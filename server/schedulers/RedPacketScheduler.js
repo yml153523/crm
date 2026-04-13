@@ -2,7 +2,7 @@ const cron = require('node-cron');
 const RedPacket = require('../models/RedPacket');
 const RedPacketRecord = require('../models/RedPacketRecord');
 const ExportService = require('../services/ExportService');
-const WebSocketService = require('./WebSocketService');
+const WebSocketService = require('../services/WebSocketService');
 
 class RedPacketScheduler {
   constructor() {
@@ -92,7 +92,7 @@ class RedPacketScheduler {
             updatedAt: new Date()
           },
           $inc: {
-            stats.expiredCount: 1
+            'stats.expiredCount': 1
           }
         },
         { session }

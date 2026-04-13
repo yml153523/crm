@@ -8,10 +8,11 @@ const exportTaskSchema = new mongoose.Schema({
     default: () => `export_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   },
   
-  createdBy: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false,
+    default: null
   },
   
   config: {

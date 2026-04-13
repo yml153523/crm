@@ -113,12 +113,6 @@ class RedPacketApp {
   }
 
   setupRoutes() {
-    this.app.use('/api/admin/red-packets', 
-      limiters.apiLimiter,
-      auditLogger({ resource: 'red_packet' }),
-      adminRedPacketsRouter
-    );
-
     this.app.use('/api/admin/red-packets/list',
       limiters.apiLimiter,
       adminRedPacketsListRouter
@@ -138,6 +132,12 @@ class RedPacketApp {
     this.app.use('/api/user/red-packets',
       limiters.claimLimiter,
       userRedPacketsRouter
+    );
+
+    this.app.use('/api/admin/red-packets', 
+      limiters.apiLimiter,
+      auditLogger({ resource: 'red_packet' }),
+      adminRedPacketsRouter
     );
   }
 

@@ -133,6 +133,7 @@ class ExportService {
       width: Math.max(h.label.length * 2 + 4, 12)
     }));
 
+    const headerRow = worksheet.getRow(1);
     headerRow.eachCell(cell => {
       cell.font = { bold: true, color: { argb: 'FFFFFF' } };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '007AFF' } };
@@ -321,13 +322,14 @@ class ExportService {
   async getExportHistory(adminId, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
 
+    const query = adminId && adminId !== 'system' ? { adminId } : {};
     const [tasks, total] = await Promise.all([
-      ExportTask.find({ adminId })
+      ExportTask.find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      ExportTask.countDocuments({ adminId })
+      ExportTask.countDocuments(query)
     ]);
 
     return {

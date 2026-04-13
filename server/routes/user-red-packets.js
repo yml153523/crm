@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { param, body, validationResult } = require('express-validator');
+const { param, query, body, validationResult } = require('express-validator');
 const RedPacket = require('../models/RedPacket');
 const AutoClaimEngine = require('../services/AutoClaimEngine');
 
