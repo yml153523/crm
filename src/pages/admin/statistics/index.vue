@@ -1,10 +1,6 @@
 <template>
+  <AdminLayout title="数据统计" :showBack="true">
   <view class="statistics-page">
-    <view class="header">
-      <text class="page-title">📊 数据统计</text>
-      <text class="header-desc">实时掌握运营数据</text>
-    </view>
-
     <view v-if="loading" class="loading-container">
       <text class="loading-text">正在加载数据...</text>
     </view>
@@ -132,10 +128,13 @@
     </view>
   </view>
   </view>
+  </AdminLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import AdminLayout from '@/components/AdminLayout.vue'
+import { apiGet } from '@/utils/request'
 
 const currentTime = ref(0)
 const loading = ref(true)
@@ -172,9 +171,9 @@ async function loadStatistics(period: string) {
   loading.value = true
   try {
     const [statsRes, videosRes, insightsRes] = await Promise.all([
-      uni.request({ url: '/api/statistics/overview', data: { period } }),
-      uni.request({ url: '/api/statistics/top-videos?limit=5&period=' + period }),
-      uni.request({ url: '/api/statistics/insights?period=' + period })
+      apiGet('/api/statistics/overview', { period }),
+      apiGet('/api/statistics/top-videos?limit=5&period=' + period),
+      apiGet('/api/statistics/insights?period=' + period)
     ])
     
     if ((statsRes.data as any)?.success) {

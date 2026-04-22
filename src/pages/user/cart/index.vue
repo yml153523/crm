@@ -1,5 +1,15 @@
 <template>
   <view class="cart-page">
+    <!-- 未登录状态 -->
+    <view class="not-logged-in" v-if="notLoggedIn">
+      <text class="nli-icon">🔒</text>
+      <text class="nli-text">请先登录后查看购物车</text>
+      <view class="nli-btn" @tap="goLogin">
+        <text class="nli-btn-text">去登录</text>
+      </view>
+    </view>
+
+    <template v-else>
     <view class="header">
       <text class="page-title">🛒 购物车</text>
       <text class="item-count" v-if="cartData.itemCount > 0">({{ cartData.itemCount }}件)</text>
@@ -70,16 +80,23 @@
       <text class="empty-text">购物车是空的</text>
       <button class="shop-btn" @tap="goShopping">去逛逛</button>
     </view>
+    </template>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { requireLogin } from '@/utils/auth'
 
 const loading = ref(true)
 const cartData = ref<any>({ items: [], totalAmount: 0, itemCount: 0 })
+const notLoggedIn = ref(false)
 
 onMounted(() => {
+  if (!requireLogin()) {
+    notLoggedIn.value = true
+    return
+  }
   loadCart()
 })
 
@@ -169,12 +186,39 @@ function goToCheckout() {
 function goShopping() {
   uni.switchTab({ url: '/pages/user/product/list' }) || uni.navigateTo({ url: '/pages/user/product/list' })
 }
+
+function goLogin() {
+  uni.navigateTo({ url: '/pages/login/index' })
+}
 </script>
 
 <style lang="scss" scoped>
 .cart-page {
   min-height: 100vh;
-  background-color: #F5F5F5;
+  background-color: #FAFAFA;
+}
+
+.not-logged-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+}
+.nli-icon { font-size: 64px; }
+.nli-text { font-size: 16px; color: #999; }
+.nli-btn {
+  margin-top: 12px;
+  padding: 12px 40px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 24px;
+  cursor: pointer;
+  &:active { opacity: 0.85; }
+}
+.nli-btn-text { font-size: 16px; color: #fff; font-weight: 600; }
+
+.cart-page {
   padding-bottom: 120px;
 }
 

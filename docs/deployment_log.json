@@ -1,0 +1,126 @@
+{
+  "timestamp": "2026-04-16T16:11:59.862299",
+  "target_host": "120.55.195.40",
+  "total_files": 16,
+  "deployed": 14,
+  "failed": 0,
+  "skipped": 2,
+  "elapsed_seconds": 33.76,
+  "phase_results": {
+    "phase1": {
+      "success": 3,
+      "failed": 0,
+      "skipped": 0,
+      "details": [
+        {
+          "file": "ssh_auto_manager.py",
+          "status": "SUCCESS",
+          "size_kb": 25.3
+        },
+        {
+          "file": "ssh_utils.py",
+          "status": "SUCCESS",
+          "size_kb": 16.6
+        },
+        {
+          "file": "batch_migrate.py",
+          "status": "SUCCESS",
+          "size_kb": 12.5
+        }
+      ]
+    },
+    "phase2": {
+      "success": 4,
+      "failed": 0,
+      "skipped": 0,
+      "details": [
+        {
+          "file": "env_manager.py",
+          "status": "SUCCESS",
+          "size_kb": 28.6
+        },
+        {
+          "file": "monitoring.py",
+          "status": "SUCCESS",
+          "size_kb": 32.8
+        },
+        {
+          "file": "performance_optimizer.py",
+          "status": "SUCCESS",
+          "size_kb": 26.7
+        },
+        {
+          "file": "ai_ops_assistant.py",
+          "status": "SUCCESS",
+          "size_kb": 40.8
+        }
+      ]
+    },
+    "phase3": {
+      "success": 4,
+      "failed": 0,
+      "skipped": 0,
+      "details": [
+        {
+          "file": "zero_trust_security.py",
+          "status": "SUCCESS",
+          "size_kb": 53.3
+        },
+        {
+          "file": "compliance_report_system.py",
+          "status": "SUCCESS",
+          "size_kb": 52.2
+        },
+        {
+          "file": "self_healing_engine.py",
+          "status": "SUCCESS",
+          "size_kb": 41.4
+        },
+        {
+          "file": "lstm_prediction_engine.py",
+          "status": "SUCCESS",
+          "size_kb": 43.3
+        }
+      ]
+    },
+    "phase4": {
+      "success": 3,
+      "failed": 0,
+      "skipped": 0,
+      "details": [
+        {
+          "file": "gnn_root_cause_analyzer.py",
+          "status": "SUCCESS",
+          "size_kb": 49.0
+        },
+        {
+          "file": "rl_decision_optimizer.py",
+          "status": "SUCCESS",
+          "size_kb": 42.0
+        },
+        {
+          "file": "prometheus_grafana_integration.py",
+          "status": "SUCCESS",
+          "size_kb": 36.7
+        }
+      ]
+    },
+    "tests": {
+      "success": 0,
+      "failed": 0,
+      "skipped": 2,
+      "details": [
+        {
+          "file": "test_phase3.py",
+          "status": "SKIPPED",
+          "reason": "本地文件不存在"
+        },
+        {
+          "file": "test_phase4.py",
+          "status": "SKIPPED",
+          "reason": "本地文件不存在"
+        }
+      ]
+    }
+  }
+}

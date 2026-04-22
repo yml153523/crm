@@ -4,9 +4,36 @@ const path = require('path')
 const fs = require('fs')
 const { exec } = require('child_process')
 const Video = require('../models/Video')
+const AuditLog = require('../models/AuditLog')
 const { v4: uuidv4 } = require('uuid')
 
 const router = express.Router()
+
+const createVideoAuditLog = async (req, logData) => {
+  try {
+    const auditLog = {
+      action: `${req.method} ${req.path}`,
+      resource: 'video',
+      method: req.method,
+      path: req.originalUrl,
+      userId: req.user?.id || null,
+      userRole: req.user?.role || null,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent'),
+      requestBody: req.method !== 'GET' ? {
+        ...logData.requestBody
+      } : undefined,
+      statusCode: logData.statusCode || null,
+      responseTime: logData.responseTime || 0,
+      success: logData.success || false,
+      errorMessage: logData.errorMessage || null,
+      timestamp: new Date()
+    }
+    await AuditLog.create(auditLog)
+  } catch (error) {
+    console.error('保存视频操作审计日志失败:', error.message)
+  }
+}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -136,18 +163,27 @@ router.get('/:id', async (req, res) => {
 })
 
 router.post('/upload', upload.single('video'), async (req, res) => {
+  const startTime = Date.now()
+
   try {
     if (!req.file) {
+      await createVideoAuditLog(req, {
+        statusCode: 400,
+        success: false,
+        errorMessage: '请选择要上传的视频文件',
+        responseTime: Date.now() - startTime,
+        requestBody: { action: 'upload' }
+      })
       return res.status(400).json({ success: false, message: '请选择要上传的视频文件' })
     }
 
     const { title, description, category, courseId, isRecommended } = req.body
-    
+
     let videoTitle = (title && title.trim()) ? title.trim() : req.file.originalname
     if (videoTitle.includes('.mp4') || videoTitle.includes('.mov') || videoTitle.includes('.avi')) {
       videoTitle = videoTitle.replace(/\.[^.]+$/, '')
     }
-    
+
     const duration = await getVideoDuration(req.file.path)
 
     const video = await Video.create({
@@ -168,6 +204,19 @@ router.post('/upload', upload.single('video'), async (req, res) => {
 
     console.log(`✅ 视频上传成功: ${videoTitle}, 时长: ${duration}秒, 大小: ${(req.file.size / 1024 / 1024).toFixed(2)}MB`)
 
+    await createVideoAuditLog(req, {
+      statusCode: 201,
+      success: true,
+      responseTime: Date.now() - startTime,
+      requestBody: {
+        action: 'upload',
+        title: videoTitle,
+        duration: duration,
+        fileSize: req.file.size,
+        category: category || '其他'
+      }
+    })
+
     res.status(201).json({
       success: true,
       data: { video },
@@ -178,38 +227,95 @@ router.post('/upload', upload.single('video'), async (req, res) => {
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path)
     }
+
+    await createVideoAuditLog(req, {
+      statusCode: 500,
+      success: false,
+      errorMessage: error.message,
+      responseTime: Date.now() - startTime,
+      requestBody: { action: 'upload', error: true }
+    })
     res.status(500).json({ success: false, message: '视频上传失败: ' + error.message })
   }
 })
 
 router.put('/:id', async (req, res) => {
+  const startTime = Date.now()
+
   try {
     const { title, description, category, status, isRecommended } = req.body
-    
+
+    const originalVideo = await Video.findById(req.params.id)
+    if (!originalVideo) {
+      await createVideoAuditLog(req, {
+        statusCode: 404,
+        success: false,
+        errorMessage: '视频不存在',
+        responseTime: Date.now() - startTime,
+        requestBody: { action: 'update', videoId: req.params.id }
+      })
+      return res.status(404).json({ success: false, message: '视频不存在' })
+    }
+
     const video = await Video.findByIdAndUpdate(
       req.params.id,
       { title, description, category, status, isRecommended },
       { new: true, runValidators: true }
     )
 
-    if (!video) {
-      return res.status(404).json({ success: false, message: '视频不存在' })
-    }
+    await createVideoAuditLog(req, {
+      statusCode: 200,
+      success: true,
+      responseTime: Date.now() - startTime,
+      requestBody: {
+        action: 'update',
+        videoId: req.params.id,
+        changes: {
+          from: { title: originalVideo.title, category: originalVideo.category },
+          to: { title, category }
+        }
+      }
+    })
 
     res.json({ success: true, data: { video }, message: '更新成功' })
   } catch (error) {
     console.error('更新视频错误:', error)
+
+    await createVideoAuditLog(req, {
+      statusCode: 500,
+      success: false,
+      errorMessage: error.message,
+      responseTime: Date.now() - startTime,
+      requestBody: { action: 'update', videoId: req.params.id }
+    })
     res.status(500).json({ success: false, message: '更新失败' })
   }
 })
 
 router.delete('/:id', async (req, res) => {
+  const startTime = Date.now()
+
   try {
-    const video = await Video.findByIdAndDelete(req.params.id)
+    const video = await Video.findById(req.params.id)
 
     if (!video) {
+      await createVideoAuditLog(req, {
+        statusCode: 404,
+        success: false,
+        errorMessage: '视频不存在',
+        responseTime: Date.now() - startTime,
+        requestBody: { action: 'delete', videoId: req.params.id }
+      })
       return res.status(404).json({ success: false, message: '视频不存在' })
     }
+
+    const videoInfo = {
+      id: video._id,
+      title: video.title,
+      videoUrl: video.videoUrl
+    }
+
+    await Video.findByIdAndDelete(req.params.id)
 
     if (video.videoUrl) {
       const localPath = `.${video.videoUrl}`
@@ -218,9 +324,27 @@ router.delete('/:id', async (req, res) => {
       if (fs.existsSync(nginxPath)) fs.unlinkSync(nginxPath)
     }
 
+    await createVideoAuditLog(req, {
+      statusCode: 200,
+      success: true,
+      responseTime: Date.now() - startTime,
+      requestBody: {
+        action: 'delete',
+        deletedVideo: videoInfo
+      }
+    })
+
     res.json({ success: true, message: '删除成功' })
   } catch (error) {
     console.error('删除视频错误:', error)
+
+    await createVideoAuditLog(req, {
+      statusCode: 500,
+      success: false,
+      errorMessage: error.message,
+      responseTime: Date.now() - startTime,
+      requestBody: { action: 'delete', videoId: req.params.id }
+    })
     res.status(500).json({ success: false, message: '删除失败' })
   }
 })

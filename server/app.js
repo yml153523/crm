@@ -13,6 +13,7 @@ const adminRedPacketsListRouter = require('./routes/admin-red-packets-list');
 const adminRedPacketsStatsRouter = require('./routes/admin-red-packets-stats');
 const adminRedPacketsExportRouter = require('./routes/admin-red-packets-export');
 const userRedPacketsRouter = require('./routes/user-red-packets');
+const auditLogRouter = require('./routes/auditLog');
 
 class RedPacketApp {
   constructor() {
@@ -134,10 +135,16 @@ class RedPacketApp {
       userRedPacketsRouter
     );
 
-    this.app.use('/api/admin/red-packets', 
+    this.app.use('/api/admin/red-packets',
       limiters.apiLimiter,
       auditLogger({ resource: 'red_packet' }),
       adminRedPacketsRouter
+    );
+
+    this.app.use('/api/audit-logs',
+      limiters.apiLimiter,
+      auditLogger({ resource: 'audit_log' }),
+      auditLogRouter
     );
   }
 

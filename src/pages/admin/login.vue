@@ -52,6 +52,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { apiPost } from '@/utils/request'
 
 const username = ref('admin')
 const password = ref('admin123')
@@ -76,17 +77,9 @@ async function handleLogin() {
   loading.value = true
 
   try {
-    const res = await new Promise((resolve, reject) => {
-      uni.request({
-        url: '/api/auth/login',
-        method: 'POST',
-        data: { username: username.value, password: password.value },
-        success: (res: any) => resolve(res),
-        fail: (err: any) => reject(err)
-      })
-    })
+    const res = await apiPost('/api/auth/login', { username: username.value, password: password.value })
 
-    const data = res.data as any
+    const data = res.data
 
     if (data.success || data.code === 200) {
       uni.setStorageSync('token', data.token)

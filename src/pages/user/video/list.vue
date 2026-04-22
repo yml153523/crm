@@ -66,73 +66,18 @@ async function loadVideoList() {
     if (res.success && res.data) {
       videoList.value = res.data.list || []
     } else {
-      videoList.value = getMockData()
+      videoList.value = []
     }
   } catch (error) {
     console.error('加载视频列表失败:', error)
-    videoList.value = getMockData()
+    videoList.value = []
+    uni.showToast({
+      title: '加载失败，请稍后重试',
+      icon: 'none'
+    })
   } finally {
     loading.value = false
   }
-}
-
-function getMockData() {
-  return [
-    {
-      _id: '1',
-      title: '瑜伽基础体式教学',
-      cover: '',
-      duration: 930,
-      viewCount: 1256,
-      isRecommended: true,
-      status: 'published'
-    },
-    {
-      _id: '2',
-      title: '普拉提核心训练',
-      cover: '',
-      duration: 1365,
-      viewCount: 892,
-      isRecommended: false,
-      status: 'published'
-    },
-    {
-      _id: '3',
-      title: '舞蹈基本功练习',
-      cover: '',
-      duration: 1100,
-      viewCount: 567,
-      isRecommended: false,
-      status: 'published'
-    },
-    {
-      _id: '4',
-      title: 'HIIT燃脂训练',
-      cover: '',
-      duration: 1510,
-      viewCount: 2341,
-      isRecommended: true,
-      status: 'published'
-    },
-    {
-      _id: '5',
-      title: '冥想放松指导',
-      cover: '',
-      duration: 1800,
-      viewCount: 432,
-      isRecommended: false,
-      status: 'published'
-    },
-    {
-      _id: '6',
-      title: '力量训练入门',
-      cover: '',
-      duration: 1200,
-      viewCount: 789,
-      isRecommended: true,
-      status: 'published'
-    }
-  ]
 }
 
 function formatDuration(seconds: number): string {

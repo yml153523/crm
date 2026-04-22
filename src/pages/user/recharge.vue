@@ -1,5 +1,25 @@
 <template>
   <view class="recharge-page">
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav-bar">
+      <view class="nav-back" @tap="goBack">
+        <text class="back-icon">←</text>
+      </view>
+      <text class="nav-title">充值中心</text>
+      <view class="nav-placeholder"></view>
+    </view>
+
+    <!-- 未登录状态 -->
+    <view class="not-logged-in" v-if="notLoggedIn">
+      <text class="nli-icon">🔒</text>
+      <text class="nli-text">请先登录后使用充值功能</text>
+      <view class="nli-btn" @tap="goLogin">
+        <text class="nli-btn-text">去登录</text>
+      </view>
+    </view>
+
+    <!-- 已登录内容 -->
+    <template v-else>
     <view class="balance-card">
       <text class="label">当前余额</text>
       <text class="amount">¥{{ balance }}</text>
@@ -57,15 +77,18 @@
         <text class="tip-item">• 充值后不支持退款，请谨慎操作</text>
       </view>
     </view>
+    </template>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { requireLogin, getBalance } from '@/utils/auth'
 
 const balance = ref('0.00')
 const selectedAmount = ref(100)
 const paying = ref(false)
+const notLoggedIn = ref(false)
 
 const amountList = [
   { value: 50, bonus: 0, popular: false },
@@ -79,15 +102,16 @@ const amountList = [
 const recordList = ref<any[]>([])
 
 onMounted(() => {
+  if (!requireLogin()) {
+    notLoggedIn.value = true
+    return
+  }
   loadBalance()
   loadRecords()
 })
 
 function loadBalance() {
-  const userInfo = uni.getStorageSync('userInfo')
-  if (userInfo?.balance) {
-    balance.value = userInfo.balance.toFixed(2)
-  }
+  balance.value = getBalance()
 }
 
 function loadRecords() {
@@ -110,45 +134,96 @@ function handlePay() {
     success: async (res) => {
       if (res.confirm) {
         try {
-          // 模拟支付过程
           await new Promise(resolve => setTimeout(resolve, 1500))
-          
-          // 更新余额
           const currentBalance = parseFloat(balance.value) || 0
           balance.value = (currentBalance + selectedAmount.value).toFixed(2)
-          
-          // 添加记录
           recordList.value.unshift({
             amount: selectedAmount.value,
             time: new Date().toLocaleString('zh-CN'),
             status: 'success'
           })
-          
-          uni.showToast({ 
-            title: `充值成功！¥${selectedAmount.value}`, 
-            icon: 'success',
-            duration: 2000
-          })
+          uni.showToast({ title: `充值成功！¥${selectedAmount.value}`, icon: 'success', duration: 2000 })
         } catch (error) {
-          console.error('支付失败:', error)
           uni.showToast({ title: '支付失败，请重试', icon: 'none' })
         }
       }
       paying.value = false
     },
-    fail: () => {
-      paying.value = false
-    }
+    fail: () => { paying.value = false }
   })
+}
+
+function goLogin() {
+  uni.navigateTo({ url: '/pages/login/index' })
+}
+
+function goBack() {
+  uni.navigateBack()
 }
 </script>
 
 <style lang="scss" scoped>
 .recharge-page {
   min-height: 100vh;
-  background-color: #F5F5F5;
+  background-color: #FAFAFA;
   padding-bottom: 32px;
 }
+
+.custom-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 16px;
+  background-color: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .nav-back {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .back-icon {
+      font-size: 20px;
+      color: #FFFFFF;
+      font-weight: bold;
+    }
+  }
+
+  .nav-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #FFFFFF;
+  }
+
+  .nav-placeholder {
+    width: 32px;
+  }
+}
+
+.not-logged-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+}
+.nli-icon { font-size: 64px; }
+.nli-text { font-size: 16px; color: #999; }
+.nli-btn {
+  margin-top: 12px;
+  padding: 12px 40px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 24px;
+  cursor: pointer;
+  &:active { opacity: 0.85; }
+}
+.nli-btn-text { font-size: 16px; color: #fff; font-weight: 600; }
 
 .balance-card {
   background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);

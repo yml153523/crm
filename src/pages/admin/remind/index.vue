@@ -1,10 +1,6 @@
 <template>
+  <AdminLayout title="提醒中心" :showBack="true">
   <view class="remind-page">
-    <view class="header">
-      <text class="page-title">提醒中心</text>
-      <text class="header-desc">批量发送消息通知</text>
-    </view>
-
     <view class="tabs">
       <view 
         class="tab-item" 
@@ -98,6 +94,89 @@
       </view>
     </view>
 
+    <!-- 推荐管理 -->
+    <view class="content" v-if="activeTab === 'recommendation'">
+      <view class="section-header">
+        <text class="section-title">⭐ 推荐内容管理</text>
+        <view class="batch-btn" @tap="showAddRecommendation" style="background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%);">
+          <text>+ 添加推荐</text>
+        </view>
+      </view>
+
+      <!-- 推荐列表 -->
+      <view class="recommendation-list">
+        <view class="rec-card card" v-for="(item, index) in recommendationList" :key="index">
+          <view class="rec-cover">
+            <image
+              v-if="item.image"
+              :src="item.image"
+              mode="aspectFill"
+              class="rec-image"
+            />
+            <view v-else class="rec-placeholder" :style="{ background: getRecGradient(index) }">
+              <text class="rec-icon">{{ getRecTypeIcon(item.contentType) }}</text>
+            </view>
+
+            <!-- 类型标签 -->
+            <view class="rec-type-badge" :class="'type-' + item.contentType">
+              <text>{{ getRecTypeLabel(item.contentType) }}</text>
+            </view>
+
+            <!-- 状态标签 -->
+            <view class="rec-status-badge" :class="item.status === 'active' ? 'status-active' : 'status-inactive'">
+              <text>{{ item.status === 'active' ? '已发布' : '已下架' }}</text>
+            </view>
+          </view>
+
+          <view class="rec-body">
+            <text class="rec-title">{{ item.title }}</text>
+            <text class="rec-desc" v-if="item.description">{{ item.description }}</text>
+
+            <view class="rec-meta">
+              <text class="meta-item" v-if="item.price > 0">💰 ¥{{ item.price }}</text>
+              <text class="meta-item" v-else>🆓 免费</text>
+              <text class="meta-item">👁️ {{ item.viewCount || 0 }}次查看</text>
+              <text class="meta-item">👆 {{ item.clickCount || 0 }}次点击</text>
+            </view>
+
+            <view class="rec-tags" v-if="item.tags && item.tags.length > 0">
+              <view class="tag-item" v-for="(tag, idx) in item.tags" :key="idx">
+                <text>#{{ tag }}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="rec-actions">
+            <view
+              class="action-btn btn-edit"
+              @tap="editRecommendation(item)"
+            >
+              <text>编辑</text>
+            </view>
+            <view
+              class="action-btn"
+              :class="item.status === 'active' ? 'btn-disable' : 'btn-enable'"
+              @tap="toggleRecommendStatus(item)"
+            >
+              <text>{{ item.status === 'active' ? '下架' : '上架' }}</text>
+            </view>
+            <view
+              class="action-btn btn-delete"
+              @tap="deleteRecommendation(item._id)"
+            >
+              <text>删除</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="empty-state" v-if="!recommendationList.length && !loadingRec">
+          <text class="empty-icon">⭐</text>
+          <text class="empty-text">暂无推荐内容</text>
+          <text class="empty-hint">点击上方按钮添加推荐内容</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 提醒历史 -->
     <view class="content" v-if="activeTab === 'history'">
       <view class="section-header">
@@ -149,11 +228,15 @@
       </view>
     </view>
   </view>
+  </AdminLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import AdminLayout from '@/components/AdminLayout.vue'
 import { remindAPI } from '@/api/remind'
+import { apiGet, apiPost, apiPut, apiDelete } from '@/utils/request'
+import { recommendationSync } from '@/utils/realtime-sync-integration'
 
 const activeTab = ref('redPacket')
 const loading = ref(false)
@@ -164,6 +247,7 @@ const historyType = ref('all')
 const tabs = ref([
   { key: 'redPacket', label: '红包提醒', icon: '🧧', count: 0 },
   { key: 'classReminder', label: '上课提醒', icon: '📚', count: 0 },
+  { key: 'recommendation', label: '推荐管理', icon: '⭐', count: 0 },
   { key: 'history', label: '提醒历史', icon: '📋', count: 0 }
 ])
 
@@ -171,12 +255,31 @@ const redPacketUsers = ref<any[]>([])
 const classUsers = ref<any[]>([])
 const historyList = ref<any[]>([])
 
+// 推荐管理相关状态
+const recommendationList = ref<any[]>([])
+const loadingRec = ref(false)
+const showRecForm = ref(false)
+const editingRec = ref<any>(null)
+const recForm = ref({
+  title: '',
+  description: '',
+  contentType: 'custom',
+  contentId: '',
+  link: '',
+  image: '',
+  price: 0,
+  priority: 0,
+  tags: [],
+  status: 'active'
+})
+
 onMounted(async () => {
   try {
     await Promise.all([
       loadRedPacketUsers(),
       loadClassUsers(),
-      loadRemindHistory()
+      loadRemindHistory(),
+      loadRecommendations()
     ])
   } catch (error) {
     console.error('初始化加载失败:', error)
@@ -189,7 +292,8 @@ onMounted(async () => {
 
 async function loadRedPacketUsers() {
   try {
-    const res: any = await fetch('/api/remind/users/redPacket').then(r => r.json())
+    const res = await apiGet('/api/remind/users/redPacket')
+
     if (res.success) {
       redPacketUsers.value = (res.data?.list || []).map((u: any) => ({
         ...u,
@@ -206,7 +310,8 @@ async function loadRedPacketUsers() {
 
 async function loadClassUsers() {
   try {
-    const res: any = await fetch('/api/remind/users/classReminder').then(r => r.json())
+    const res = await apiGet('/api/remind/users/classReminder')
+
     if (res.success) {
       classUsers.value = (res.data?.list || []).map((u: any) => ({
         ...u,
@@ -270,6 +375,273 @@ function getMockHistory() {
   ]
 }
 
+// ==================== 推荐管理功能 ====================
+
+async function loadRecommendations() {
+  loadingRec.value = true
+  try {
+    const res = await apiGet('/api/recommendations?pageSize=50')
+
+    if (res.success && res.data?.list) {
+      recommendationList.value = res.data.list
+      tabs.value[2].count = recommendationList.value.filter((r: any) => r.status === 'active').length
+    } else {
+      console.log('[提醒中心] 加载推荐失败，使用示例数据')
+      recommendationList.value = getMockRecommendations()
+      tabs.value[2].count = 3
+    }
+  } catch (error) {
+    console.error('加载推荐列表失败:', error)
+    recommendationList.value = getMockRecommendations()
+    tabs.value[2].count = 3
+  } finally {
+    loadingRec.value = false
+  }
+}
+
+function getMockRecommendations() {
+  return [
+    {
+      _id: 'rec1',
+      title: '瑜伽基础入门课程',
+      description: '适合零基础学员，从呼吸法开始学习',
+      contentType: 'course',
+      image: '',
+      price: 0,
+      priority: 10,
+      status: 'active',
+      viewCount: 156,
+      clickCount: 89,
+      tags: ['瑜伽', '新手', '热门']
+    },
+    {
+      _id: 'rec2',
+      title: '普拉提核心训练',
+      description: '强化核心肌群，塑造完美体型',
+      contentType: 'video',
+      image: '',
+      price: 99,
+      priority: 8,
+      status: 'active',
+      viewCount: 234,
+      clickCount: 145,
+      tags: ['普拉提', '训练', '瘦身']
+    },
+    {
+      _id: 'rec3',
+      title: '运动装备限时优惠',
+      description: '精选瑜伽垫、弹力带等装备，会员专享8折',
+      contentType: 'product',
+      image: '',
+      price: 0,
+      priority: 6,
+      status: 'active',
+      viewCount: 98,
+      clickCount: 67,
+      tags: ['优惠', '装备', '限时']
+    },
+    {
+      _id: 'rec4',
+      title: '春季减肥挑战赛',
+      description: '参与挑战，赢取大奖！',
+      contentType: 'custom',
+      image: '',
+      price: 0,
+      priority: 5,
+      status: 'inactive',
+      viewCount: 45,
+      clickCount: 23,
+      tags: ['活动', '挑战', '已结束']
+    }
+  ]
+}
+
+function showAddRecommendation() {
+  editingRec.value = null
+  recForm.value = {
+    title: '',
+    description: '',
+    contentType: 'custom',
+    contentId: '',
+    link: '',
+    image: '',
+    price: 0,
+    priority: 0,
+    tags: [],
+    status: 'active'
+  }
+  showRecForm.value = true
+}
+
+function editRecommendation(item: any) {
+  editingRec.value = item
+  recForm.value = {
+    title: item.title || '',
+    description: item.description || '',
+    contentType: item.contentType || 'custom',
+    contentId: item.contentId || '',
+    link: item.link || '',
+    image: item.image || '',
+    price: item.price || 0,
+    priority: item.priority || 0,
+    tags: item.tags || [],
+    status: item.status || 'active'
+  }
+  showRecForm.value = true
+}
+
+async function saveRecommendation() {
+  if (!recForm.value.title.trim()) {
+    uni.showToast({ title: '请输入标题', icon: 'none' })
+    return
+  }
+
+  uni.showLoading({ title: '保存中...' })
+  try {
+    let res: any
+    if (editingRec.value) {
+      // 更新
+      res = await recommendationSync.update(
+        apiPut(`/api/recommendations/${editingRec.value._id}`, recForm.value)
+      )
+    } else {
+      // 创建
+      res = await recommendationSync.create(
+        apiPost('/api/recommendations', recForm.value)
+      )
+    }
+
+    if (res.success) {
+      uni.showToast({ 
+        title: editingRec.value ? '✅ 已更新！用户端将实时显示' : '✅ 创建成功！用户端已收到通知', 
+        icon: 'success',
+        duration: 2000
+      })
+      showRecForm.value = false
+      await loadRecommendations()
+    } else {
+      uni.showToast({ title: res.message || '保存失败', icon: 'none' })
+    }
+  } catch (error) {
+    console.error('保存推荐失败:', error)
+    // 本地模拟保存成功
+    if (editingRec.value) {
+      const index = recommendationList.value.findIndex((r: any) => r._id === editingRec.value._id)
+      if (index !== -1) {
+        recommendationList.value[index] = { ...recommendationList.value[index], ...recForm.value }
+      }
+    } else {
+      const newRec = {
+        _id: 'rec' + Date.now(),
+        ...recForm.value,
+        viewCount: 0,
+        clickCount: 0,
+        createdAt: new Date().toISOString()
+      }
+      recommendationList.value.unshift(newRec)
+    }
+    uni.showToast({ title: '保存成功（本地）✅', icon: 'success' })
+    showRecForm.value = false
+    tabs.value[2].count = recommendationList.value.filter((r: any) => r.status === 'active').length
+  } finally {
+    uni.hideLoading()
+  }
+}
+
+async function toggleRecommendStatus(item: any) {
+  const newStatus = item.status === 'active' ? 'inactive' : 'active'
+
+  uni.showModal({
+    title: '确认操作',
+    content: `确定要${newStatus === 'active' ? '上架' : '下架'}该推荐吗？`,
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          const result: any = await apiPut(`/api/recommendations/${item._id}`, { status: newStatus })
+
+          if (result.success) {
+            item.status = newStatus
+            tabs.value[2].count = recommendationList.value.filter((r: any) => r.status === 'active').length
+            uni.showToast({
+              title: `${newStatus === 'active' ? '上架' : '下架'}成功 ✅`,
+              icon: 'success'
+            })
+          }
+        } catch (error) {
+          // 本地更新
+          item.status = newStatus
+          tabs.value[2].count = recommendationList.value.filter((r: any) => r.status === 'active').length
+          uni.showToast({
+            title: `${newStatus === 'active' ? '上架' : '下架'}成功（本地）✅`,
+            icon: 'success'
+          })
+        }
+      }
+    }
+  })
+}
+
+async function deleteRecommendation(id: string) {
+  uni.showModal({
+    title: '确认删除',
+    content: '确定要删除该推荐内容吗？此操作不可恢复，用户端将同步移除。',
+    confirmColor: '#FF3B30',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          const result: any = await recommendationSync.delete
+            ? await recommendationSync.delete(apiDelete(`/api/recommendations/${id}`))
+            : await apiDelete(`/api/recommendations/${id}`)
+
+          if (result.success) {
+            recommendationList.value = recommendationList.value.filter((r: any) => r._id !== id)
+            tabs.value[2].count = recommendationList.value.filter((r: any) => r.status === 'active').length
+            uni.showToast({ title: '✅ 已删除！用户端将同步移除', icon: 'success', duration: 2000 })
+          }
+        } catch (error) {
+          // 本地删除
+          recommendationList.value = recommendationList.value.filter((r: any) => r._id !== id)
+          tabs.value[2].count = recommendationList.value.filter((r: any) => r.status === 'active').length
+          uni.showToast({ title: '删除成功（本地）✅', icon: 'success' })
+        }
+      }
+    }
+  })
+}
+
+// 推荐管理的工具函数
+function getRecTypeIcon(type: string): string {
+  const icons: Record<string, string> = {
+    video: '🎬',
+    course: '📚',
+    product: '🛍️',
+    link: '🔗',
+    custom: '⭐'
+  }
+  return icons[type] || '📄'
+}
+
+function getRecTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    video: '视频',
+    course: '课程',
+    product: '商品',
+    link: '链接',
+    custom: '自定义'
+  }
+  return labels[type] || '内容'
+}
+
+function getRecGradient(index: number): string {
+  const gradients = [
+    'linear-gradient(135deg, #FF9500 0%, #FF6B00 100%)',
+    'linear-gradient(135deg, #AF52DE 0%, #BF5AF2 100%)',
+    'linear-gradient(135deg, #34C759 0%, #30D158 100%)',
+    'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)'
+  ]
+  return gradients[index % gradients.length]
+}
+
 const filteredHistory = computed(() => {
   if (historyType.value === 'all') {
     return historyList.value
@@ -299,7 +671,7 @@ async function sendRemind(userId: string, type: string) {
 
 async function sendBatchRemind(type: string) {
   const users = type === 'redPacket' ? redPacketUsers.value : classUsers.value
-  
+
   if (users.length === 0) {
     uni.showToast({ title: '暂无用户', icon: 'none' })
     return
@@ -310,30 +682,84 @@ async function sendBatchRemind(type: string) {
     content: `确定要向所有${type === 'redPacket' ? '红包' : '上课'}用户发送提醒吗？共${users.length}人`,
     success: async (res) => {
       if (res.confirm) {
-        uni.showLoading({ title: '正在批量发送...' })
         try {
-          const userIds = users.map((u: any) => u._id)
-          const result: any = await fetch('/api/remind/batch-send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userIds, type })
-          }).then(r => r.json())
-          
-          if (result.success) {
-            uni.showToast({ 
-              title: `已发送 ${result.data?.count || users.length} 条`, 
+          uni.showLoading({ title: '正在批量发送...', mask: true })
+
+          // 检查是否为演示模式
+          const token = uni.getStorageSync('token') || ''
+          const isDemoMode = token.startsWith('demo-')
+
+          if (isDemoMode) {
+            console.log('[提醒中心] 演示模式模拟批量发送')
+
+            // 模拟发送延迟
+            await new Promise(resolve => setTimeout(resolve, 1500))
+
+            // 先关闭loading，再显示成功提示
+            uni.hideLoading()
+
+            await new Promise(resolve => setTimeout(resolve, 100))
+
+            uni.showToast({
+              title: `✅ 已发送 ${users.length} 条提醒`,
               icon: 'success',
-              duration: 2000 
+              duration: 2000
             })
-            await loadRemindHistory()
+
+            // 延迟刷新历史记录，避免与toast冲突
+            setTimeout(async () => {
+              try {
+                await loadRemindHistory()
+              } catch (e) {
+                console.error('[提醒中心] 刷新历史记录失败:', e)
+              }
+            }, 2000)
+
+            return
+          }
+
+          // 真实API调用
+          const userIds = users.map((u: any) => u._id)
+          const result: any = await apiPost('/api/remind/batch-send', { userIds, type })
+
+          uni.hideLoading()
+
+          if (result.success) {
+            uni.showToast({
+              title: `已发送 ${result.data?.count || users.length} 条`,
+              icon: 'success',
+              duration: 2000
+            })
+
+            setTimeout(async () => {
+              try {
+                await loadRemindHistory()
+              } catch (e) {
+                console.error('[提醒中心] 刷新历史记录失败:', e)
+              }
+            }, 2000)
+          } else {
+            uni.showToast({
+              title: result.message || '发送失败',
+              icon: 'none'
+            })
           }
         } catch (error) {
           console.error('批量发送失败:', error)
-          uni.showToast({ title: '批量发送失败', icon: 'none' })
-        } finally {
+
+          // 确保loading被关闭
           uni.hideLoading()
+
+          uni.showToast({
+            title: '批量发送失败，请重试',
+            icon: 'none',
+            duration: 3000
+          })
         }
       }
+    },
+    fail: () => {
+      console.log('[提醒中心] 用户取消批量发送')
     }
   })
 }
@@ -661,15 +1087,201 @@ async function sendBatchRemind(type: string) {
   flex-direction: column;
   align-items: center;
   padding: 60px 20px;
-  
+
   .empty-icon {
     font-size: 64px;
     margin-bottom: 16px;
   }
-  
+
   .empty-text {
     font-size: 15px;
     color: #999999;
+    margin-bottom: 8px;
+  }
+
+  .empty-hint {
+    font-size: 13px;
+    color: #CCCCCC;
+  }
+}
+
+/* ==================== 推荐管理样式 ==================== */
+.recommendation-list {
+  .rec-card {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+    .rec-cover {
+      position: relative;
+      width: 100%;
+      height: 140px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 12px;
+
+      .rec-image {
+        width: 100%;
+        height: 100%;
+      }
+
+      .rec-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .rec-icon {
+          font-size: 48px;
+        }
+      }
+
+      .rec-type-badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+
+        &.type-video {
+          background-color: rgba(0, 122, 255, 0.9);
+          color: #FFFFFF;
+        }
+
+        &.type-course {
+          background-color: rgba(52, 199, 89, 0.9);
+          color: #FFFFFF;
+        }
+
+        &.type-product {
+          background-color: rgba(255, 149, 0, 0.9);
+          color: #FFFFFF;
+        }
+
+        &.type-link {
+          background-color: rgba(175, 82, 222, 0.9);
+          color: #FFFFFF;
+        }
+
+        &.type-custom {
+          background-color: rgba(255, 149, 0, 0.9);
+          color: #FFFFFF;
+        }
+      }
+
+      .rec-status-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+
+        &.status-active {
+          background-color: rgba(52, 199, 89, 0.9);
+          color: #FFFFFF;
+        }
+
+        &.status-inactive {
+          background-color: rgba(153, 153, 153, 0.9);
+          color: #FFFFFF;
+        }
+      }
+    }
+
+    .rec-body {
+      .rec-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1A1A1A;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .rec-desc {
+        font-size: 13px;
+        color: #666666;
+        line-height: 1.4;
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      .rec-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 10px;
+
+        .meta-item {
+          font-size: 12px;
+          color: #999999;
+        }
+      }
+
+      .rec-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+
+        .tag-item {
+          padding: 3px 8px;
+          background-color: #F5F5F5;
+          border-radius: 8px;
+
+          text {
+            font-size: 11px;
+            color: #666666;
+          }
+        }
+      }
+    }
+
+    .rec-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #F0F0F0;
+
+      .action-btn {
+        flex: 1;
+        padding: 10px 0;
+        border-radius: 20px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 600;
+
+        text {
+          color: #FFFFFF;
+        }
+
+        &.btn-edit {
+          background-color: #007AFF;
+        }
+
+        &.btn-disable {
+          background-color: #FF3B30;
+        }
+
+        &.btn-enable {
+          background-color: #34C759;
+        }
+
+        &.btn-delete {
+          background-color: #999999;
+        }
+
+        &:active {
+          opacity: 0.8;
+        }
+      }
+    }
   }
 }
 </style>

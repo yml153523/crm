@@ -66,6 +66,7 @@ async function handleLogin() {
         url: '/api/auth/login',
         method: 'POST',
         data: { phone: phone.value },
+        timeout: 5000,
         success: (res: any) => resolve(res),
         fail: (err: any) => reject(err)
       })
@@ -76,30 +77,30 @@ async function handleLogin() {
     if (data.success || data.code === 200) {
       uni.setStorageSync('token', data.token)
       uni.setStorageSync('userInfo', data.user || { phone: phone.value, role: 'user' })
-      
+
       uni.showToast({ title: '登录成功！', icon: 'success' })
-      
+
       setTimeout(() => {
-        uni.switchTab({ url: '/pages/user/home' })
-      }, 1000)
+        uni.reLaunch({ url: '/pages/user/home' })
+      }, 800)
     } else {
       throw new Error(data.message || '登录失败')
     }
   } catch (error) {
     console.error('用户登录错误:', error)
-    
+
     uni.setStorageSync('token', 'demo-token-user-' + Date.now())
-    uni.setStorageSync('userInfo', { 
-      phone: phone.value, 
+    uni.setStorageSync('userInfo', {
+      phone: phone.value,
       role: 'user',
       name: '普通用户'
     })
-    
-    uni.showToast({ title: '登录成功！', icon: 'success' })
-    
+
+    uni.showToast({ title: '登录成功！（演示模式）', icon: 'success' })
+
     setTimeout(() => {
-      uni.switchTab({ url: '/pages/user/home' })
-    }, 1000)
+      uni.reLaunch({ url: '/pages/user/home' })
+    }, 800)
   } finally {
     loading.value = false
   }

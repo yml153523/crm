@@ -1,0 +1,273 @@
+{
+  "version": "v3",
+  "timestamp": "2026-04-16T22:22:25.953145",
+  "target_host": "120.55.195.40",
+  "elapsed_seconds": 20.96,
+  "summary": {
+    "total_tests": 35,
+    "passed": 18,
+    "failed": 17,
+    "pass_rate": 51.4
+  },
+  "group_details": {
+    "Group 1 - SSH自动化核心": {
+      "description": "密码自动化、连接池、批量操作",
+      "tests": [
+        {
+          "name": "密码AES加解密",
+          "passed": true,
+          "duration": 0.993,
+          "error": ""
+        },
+        {
+          "name": "环境配置自动加载",
+          "passed": true,
+          "duration": 0.686,
+          "error": ""
+        },
+        {
+          "name": "SSH连接池复用",
+          "passed": true,
+          "duration": 1.505,
+          "error": ""
+        },
+        {
+          "name": "ssh_utils快捷函数",
+          "passed": true,
+          "duration": 1.451,
+          "error": ""
+        },
+        {
+          "name": "批量迁移工具",
+          "passed": false,
+          "duration": 0.1,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349331.py\", line 10, in <module>\n    assert hasattr(tool, 'scan_directory') or hasattr(tool, 'migrate')\nAssertionError\n"
+        }
+      ],
+      "passed": 4,
+      "failed": 1
+    },
+    "Group 2 - CI/CD与环境管理": {
+      "description": "多环境切换、监控、性能优化",
+      "tests": [
+        {
+          "name": "多环境配置切换",
+          "passed": false,
+          "duration": 0.371,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349331.py\", line 8, in <module>\n    env_mgr = EnvManager()\n  File \"/home/liuyeming/work/crm/scripts/env_manager.py\", line 203, in __init__\n    self._create_default_config()\n  File \"/home/liuyeming/work/crm/scripts/env_manager.py\", line "
+        },
+        {
+          "name": "监控模块基础功能",
+          "passed": true,
+          "duration": 0.693,
+          "error": ""
+        },
+        {
+          "name": "性能优化分析能力",
+          "passed": true,
+          "duration": 0.695,
+          "error": ""
+        },
+        {
+          "name": "连接池优化器",
+          "passed": true,
+          "duration": 0.694,
+          "error": ""
+        }
+      ],
+      "passed": 3,
+      "failed": 1
+    },
+    "Group 3 - Prometheus + Grafana监控": {
+      "description": "指标采集、格式导出、Dashboard生成",
+      "tests": [
+        {
+          "name": "Prometheus指标格式",
+          "passed": false,
+          "duration": 0.502,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349334.py\", line 17, in <module>\n    metrics_text = collector.export_metrics()\n  File \"/home/liuyeming/work/crm/scripts/prometheus_grafana_integration.py\", line 376, in export_metrics\n    lines.append(metric.to_prometheus_format())\n  Fi"
+        },
+        {
+          "name": "Grafana Dashboard生成",
+          "passed": true,
+          "duration": 0.165,
+          "error": ""
+        },
+        {
+          "name": "告警规则配置",
+          "passed": true,
+          "duration": 0.165,
+          "error": ""
+        },
+        {
+          "name": "MonitoringIntegration主类",
+          "passed": false,
+          "duration": 0.167,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349336.py\", line 8, in <module>\n    integration = MonitoringIntegration()\n  File \"/home/liuyeming/work/crm/scripts/prometheus_grafana_integration.py\", line 873, in __init__\n    self.builder = GrafanaDashboardBuilder(config.get('datasour"
+        }
+      ],
+      "passed": 2,
+      "failed": 2
+    },
+    "Group 4 - 零信任安全架构": {
+      "description": "JWT认证、行为分析、IP地理围栏、审计日志",
+      "tests": [
+        {
+          "name": "JWT Token认证",
+          "passed": false,
+          "duration": 0.376,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349336.py\", line 19, in <module>\n    assert token is not None\nAssertionError\n"
+        },
+        {
+          "name": "用户行为基线建模",
+          "passed": true,
+          "duration": 0.381,
+          "error": ""
+        },
+        {
+          "name": "IP地理位置验证",
+          "passed": true,
+          "duration": 0.384,
+          "error": ""
+        },
+        {
+          "name": "安全事件审计日志",
+          "passed": true,
+          "duration": 0.379,
+          "error": ""
+        }
+      ],
+      "passed": 3,
+      "failed": 1
+    },
+    "Group 5 - AI智能能力": {
+      "description": "LSTM时序预测、GNN根因分析、AI运维助手",
+      "tests": [
+        {
+          "name": "LSTM预测模型初始化",
+          "passed": false,
+          "duration": 0.236,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349338.py\", line 6, in <module>\n    from lstm_prediction_engine import LSTMPredictionEngine\n  File \"/home/liuyeming/work/crm/scripts/lstm_prediction_engine.py\", line 345, in <module>\n    class LSTMPredictor(nn.Module):\nNameError: name '"
+        },
+        {
+          "name": "LSTM特征提取能力",
+          "passed": false,
+          "duration": 0.226,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349339.py\", line 6, in <module>\n    from lstm_prediction_engine import LSTMPredictionEngine, FeatureEngineer\n  File \"/home/liuyeming/work/crm/scripts/lstm_prediction_engine.py\", line 345, in <module>\n    class LSTMPredictor(nn.Module):\n"
+        },
+        {
+          "name": "LSTM时序预测执行",
+          "passed": false,
+          "duration": 0.228,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349339.py\", line 6, in <module>\n    from lstm_prediction_engine import LSTMPredictionEngine\n  File \"/home/liuyeming/work/crm/scripts/lstm_prediction_engine.py\", line 345, in <module>\n    class LSTMPredictor(nn.Module):\nNameError: name '"
+        },
+        {
+          "name": "GNN根因分析器初始化",
+          "passed": true,
+          "duration": 0.228,
+          "error": ""
+        },
+        {
+          "name": "GNN多维异常检测",
+          "passed": false,
+          "duration": 0.228,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349340.py\", line 19, in <module>\n    anomalies = analyzer.analyze(metrics_data)\n  File \"/home/liuyeming/work/crm/scripts/gnn_root_cause_analyzer.py\", line 845, in analyze\n    pagerank_scores = self._compute_pagerank(anomaly_events)\n  Fi"
+        },
+        {
+          "name": "GNN根因路径分析",
+          "passed": true,
+          "duration": 0.236,
+          "error": ""
+        },
+        {
+          "name": "AI运维助手诊断能力",
+          "passed": true,
+          "duration": 0.392,
+          "error": ""
+        }
+      ],
+      "passed": 3,
+      "failed": 4
+    },
+    "Group 6 - 自愈与优化引擎": {
+      "description": "自动故障修复、强化学习策略优化",
+      "tests": [
+        {
+          "name": "自愈引擎初始化",
+          "passed": true,
+          "duration": 0.116,
+          "error": ""
+        },
+        {
+          "name": "自愈异常检测",
+          "passed": true,
+          "duration": 0.117,
+          "error": ""
+        },
+        {
+          "name": "自动修复策略推荐",
+          "passed": true,
+          "duration": 0.116,
+          "error": ""
+        },
+        {
+          "name": "RL决策优化器初始化",
+          "passed": false,
+          "duration": 0.23,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349342.py\", line 8, in <module>\n    optimizer = RLOptimizer()\n  File \"/home/liuyeming/work/crm/scripts/rl_decision_optimizer.py\", line 806, in __init__\n    env_config = config.get('environment') if config.get('environment') else default"
+        },
+        {
+          "name": "RL策略学习与优化",
+          "passed": false,
+          "duration": 0.231,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349343.py\", line 8, in <module>\n    optimizer = RLOptimizer()\n  File \"/home/liuyeming/work/crm/scripts/rl_decision_optimizer.py\", line 806, in __init__\n    env_config = config.get('environment') if config.get('environment') else default"
+        },
+        {
+          "name": "最优策略导出",
+          "passed": false,
+          "duration": 0.231,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349343.py\", line 8, in <module>\n    optimizer = RLOptimizer()\n  File \"/home/liuyeming/work/crm/scripts/rl_decision_optimizer.py\", line 806, in __init__\n    env_config = config.get('environment') if config.get('environment') else default"
+        }
+      ],
+      "passed": 3,
+      "failed": 3
+    },
+    "Group 7 - 合规报告系统": {
+      "description": "SOC2/GDPR/ISO27001/等保三级标准报告生成",
+      "tests": [
+        {
+          "name": "SOC2合规报告",
+          "passed": false,
+          "duration": 0.12,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349344.py\", line 8, in <module>\n    auditor = ComplianceAuditSystem()\n  File \"/home/liuyeming/work/crm/scripts/compliance_report_system.py\", line 1040, in __init__\n    data_sources = config.get('data_sources') if config.get('data_source"
+        },
+        {
+          "name": "GDPR数据保护报告",
+          "passed": false,
+          "duration": 0.121,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349344.py\", line 8, in <module>\n    auditor = ComplianceAuditSystem()\n  File \"/home/liuyeming/work/crm/scripts/compliance_report_system.py\", line 1040, in __init__\n    data_sources = config.get('data_sources') if config.get('data_source"
+        },
+        {
+          "name": "ISO27001信息安全报告",
+          "passed": false,
+          "duration": 0.129,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349344.py\", line 8, in <module>\n    auditor = ComplianceAuditSystem()\n  File \"/home/liuyeming/work/crm/scripts/compliance_report_system.py\", line 1040, in __init__\n    data_sources = config.get('data_sources') if config.get('data_source"
+        },
+        {
+          "name": "等保三级合规报告",
+          "passed": false,
+          "duration": 0.121,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349345.py\", line 8, in <module>\n    auditor = ComplianceAuditSystem()\n  File \"/home/liuyeming/work/crm/scripts/compliance_report_system.py\", line 1040, in __init__\n    data_sources = config.get('data_sources') if config.get('data_source"
+        },
+        {
+          "name": "综合合规状态仪表板",
+          "passed": false,
+          "duration": 0.123,
+          "error": "Traceback (most recent call last):\n  File \"/tmp/crm_test_v3_1776349345.py\", line 8, in <module>\n    auditor = ComplianceAuditSystem()\n  File \"/home/liuyeming/work/crm/scripts/compliance_report_system.py\", line 1040, in __init__\n    data_sources = config.get('data_sources') if config.get('data_source"
+        }
+      ],
+      "passed": 0,
+      "failed": 5
+    }
+  }
+}

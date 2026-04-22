@@ -1,6 +1,14 @@
-// 用户端构建配置（8081端口 - 移动端/小程序）- 完整版
+// 用户端构建配置（8080端口 - 移动端/小程序）- 完整版
 {
   "pages": [
+    {
+      "path": "pages/user/home",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
+      }
+    },
     {
       "path": "pages/login/index",
       "style": {
@@ -9,108 +17,90 @@
       }
     },
     {
-      "path": "pages/user/home",
-      "style": {
-        "navigationBarTitleText": "首页"
-      }
-    },
-    {
       "path": "pages/user/video/list",
       "style": {
-        "navigationBarTitleText": "视频课程"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
       }
     },
     {
       "path": "pages/user/video/player",
       "style": {
-        "navigationBarTitleText": "视频播放"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#000000"
       }
     },
     {
       "path": "pages/user/recharge",
       "style": {
-        "navigationBarTitleText": "充值中心"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
       }
     },
     {
       "path": "pages/user/product/list",
       "style": {
-        "navigationBarTitleText": "商品列表"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
       }
     },
     {
       "path": "pages/user/product/detail",
       "style": {
-        "navigationBarTitleText": "商品详情"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FFFFFF"
       }
     },
     {
       "path": "pages/user/cart/index",
       "style": {
-        "navigationBarTitleText": "购物车"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
       }
     },
     {
       "path": "pages/user/order/create",
       "style": {
-        "navigationBarTitleText": "确认订单"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
       }
     },
     {
       "path": "pages/user/order/list",
       "style": {
-        "navigationBarTitleText": "我的订单"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
       }
     },
     {
       "path": "pages/user/order/detail",
       "style": {
-        "navigationBarTitleText": "订单详情"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FFFFFF"
       }
     },
     {
       "path": "pages/user/red-packet/center",
       "style": {
-        "navigationBarTitleText": "我的红包"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
       }
     }
   ],
   "globalStyle": {
-    "navigationBarTextStyle": "white",
-    "navigationBarTitleText": "CRM系统",
-    "navigationBarBackgroundColor": "#667eea",
-    "backgroundColor": "#F5F6FA"
-  },
-  "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#667eea",
-    "borderStyle": "black",
-    "backgroundColor": "#ffffff",
-    "list": [
-      {
-        "pagePath": "pages/user/home",
-        "iconPath": "static/icons/home.png",
-        "selectedIconPath": "static/icons/home-active.png",
-        "text": "首页"
-      },
-      {
-        "pagePath": "pages/user/video/list",
-        "iconPath": "static/icons/video.png",
-        "selectedIconPath": "static/icons/video-active.png",
-        "text": "视频"
-      },
-      {
-        "pagePath": "pages/user/product/list",
-        "iconPath": "static/icons/shop.png",
-        "selectedIconPath": "static/icons/shop-active.png",
-        "text": "商城"
-      },
-      {
-        "pagePath": "pages/user/red-packet/center",
-        "iconPath": "static/icons/redpacket.png",
-        "selectedIconPath": "static/icons/redpacket-active.png",
-        "text": "红包"
-      }
-    ]
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "",
+    "navigationBarBackgroundColor": "#FAFAFA",
+    "backgroundColor": "#F5F5F5"
   }
 }

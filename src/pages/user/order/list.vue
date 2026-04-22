@@ -1,5 +1,15 @@
 <template>
   <view class="order-list-page">
+    <!-- 未登录状态 -->
+    <view class="not-logged-in" v-if="notLoggedIn">
+      <text class="nli-icon">🔒</text>
+      <text class="nli-text">请先登录后查看订单</text>
+      <view class="nli-btn" @tap="goLogin">
+        <text class="nli-btn-text">去登录</text>
+      </view>
+    </view>
+
+    <template v-else>
     <view class="header">
       <text class="page-title">📦 我的订单</text>
     </view>
@@ -85,11 +95,13 @@
         <text>- 没有更多了 -</text>
       </view>
     </scroll-view>
+    </template>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { requireLogin } from '@/utils/auth'
 
 const currentTab = ref('all')
 const loading = ref(false)
@@ -97,6 +109,7 @@ const hasMore = ref(true)
 const page = ref(1)
 const pageSize = 10
 const orders = ref<any[]>([])
+const notLoggedIn = ref(false)
 
 const tabs = [
   { label: '全部', value: 'all' },
@@ -107,6 +120,10 @@ const tabs = [
 ]
 
 onMounted(() => {
+  if (!requireLogin()) {
+    notLoggedIn.value = true
+    return
+  }
   loadOrders()
 })
 
@@ -257,13 +274,37 @@ async function confirmOrder(orderId: string) {
 function goShopping() {
   uni.navigateTo({ url: '/pages/user/product/list' })
 }
+
+function goLogin() {
+  uni.navigateTo({ url: '/pages/login/index' })
+}
 </script>
 
 <style lang="scss" scoped>
 .order-list-page {
   min-height: 100vh;
-  background-color: #F5F5F5;
+  background-color: #FAFAFA;
 }
+
+.not-logged-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+}
+.nli-icon { font-size: 64px; }
+.nli-text { font-size: 16px; color: #999; }
+.nli-btn {
+  margin-top: 12px;
+  padding: 12px 40px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 24px;
+  cursor: pointer;
+  &:active { opacity: 0.85; }
+}
+.nli-btn-text { font-size: 16px; color: #fff; font-weight: 600; }
 
 .header {
   padding: 20px 16px;

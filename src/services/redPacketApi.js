@@ -2,32 +2,47 @@ const BASE_URL = '/api/admin/red-packets';
 
 const api = {
   async request(endpoint, options = {}) {
+    const token = uni.getStorageSync('token');
     const url = `${BASE_URL}${endpoint}`;
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-      },
-      ...options
-    };
-
-    try {
-      const response = await fetch(url, config);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw {
-          status: response.status,
-          message: data.message || '请求失败',
-          errors: data.errors
-        };
-      }
-
-      return data;
-    } catch (error) {
-      console.error(`API请求失败 [${endpoint}]:`, error);
-      throw error;
-    }
+    
+    return new Promise((resolve, reject) => {
+      uni.request({
+        url: url,
+        method: options.method || 'GET',
+        data: options.data || {},
+        header: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+          ...options.headers
+        },
+        success: (res) => {
+          const data = res.data;
+          
+          if (data.success !== false) {
+            resolve(data);
+          } else if (res.statusCode === 401) {
+            uni.removeStorageSync('token');
+            uni.removeStorageSync('userInfo');
+            uni.reLaunch({ url: '/pages/admin/login' });
+            reject(new Error('登录已过期'));
+          } else {
+            uni.showToast({
+              title: data.message || '请求失败',
+              icon: 'none'
+            });
+            reject(new Error(data.message || '请求失败'));
+          }
+        },
+        fail: (err) => {
+          console.error(`API请求失败 [${endpoint}]:`, err);
+          uni.showToast({
+            title: '网络错误，请稍后重试',
+            icon: 'none'
+          });
+          reject(err);
+        }
+      });
+    });
   },
 
   getList(params = {}) {
@@ -52,28 +67,28 @@ const api = {
   create(data) {
     return this.request('/', {
       method: 'POST',
-      body: JSON.stringify(data)
+      data
     });
   },
 
   update(id, data) {
     return this.request(`/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data)
+      data
     });
   },
 
   updateRules(id, rules) {
     return this.request(`/${id}/rules`, {
       method: 'PUT',
-      body: JSON.stringify(rules)
+      data: rules
     });
   },
 
   updateLimits(id, limits) {
     return this.request(`/${id}/limits`, {
       method: 'PUT',
-      body: JSON.stringify(limits)
+      data: limits
     });
   },
 
@@ -86,7 +101,7 @@ const api = {
   saveDraft(id, data) {
     return this.request(`/${id}/draft`, {
       method: 'PUT',
-      body: JSON.stringify(data)
+      data
     });
   },
 
@@ -99,21 +114,21 @@ const api = {
   batchActivate(ids) {
     return this.request('/batch/activate', {
       method: 'PATCH',
-      body: JSON.stringify({ ids })
+      data: { ids }
     });
   },
 
   batchDeactivate(ids) {
     return this.request('/batch/deactivate', {
       method: 'PATCH',
-      body: JSON.stringify({ ids })
+      data: { ids }
     });
   },
 
   batchDelete(ids) {
     return this.request('/batch', {
       method: 'DELETE',
-      body: JSON.stringify({ ids, confirm: true })
+      data: { ids, confirm: true }
     });
   }
 };

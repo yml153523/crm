@@ -4,6 +4,7 @@ interface RequestOptions {
   data?: any
   header?: Record<string, string>
   loading?: boolean
+  skipAuthRedirect?: boolean  // 新增：跳过401自动跳转（用于游客模式）
 }
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
@@ -33,10 +34,19 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
         if (data.success) {
           resolve(data)
         } else if (data.code === 401) {
+          // 清除过期的认证信息
           uni.removeStorageSync('token')
           uni.removeStorageSync('userInfo')
-          uni.reLaunch({ url: '/pages/login/index' })
-          reject(new Error('登录已过期'))
+          
+          // 如果不是游客模式（skipAuthRedirect=false），则跳转到登录页
+          if (!options.skipAuthRedirect) {
+            console.log('[Request] 401未授权 - 跳转到登录页')
+            uni.reLaunch({ url: '/pages/login/index' })
+          } else {
+            console.log('[Request] 401未授权 - 游客模式,不跳转')
+          }
+          
+          reject(new Error('登录已过期或未登录'))
         } else {
           uni.showToast({
             title: data.message || '请求失败',

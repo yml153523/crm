@@ -1,5 +1,15 @@
 <template>
   <view class="red-packet-center-page">
+    <!-- 未登录状态 -->
+    <view class="not-logged-in" v-if="notLoggedIn">
+      <text class="nli-icon">🔒</text>
+      <text class="nli-text">请先登录后查看红包</text>
+      <view class="nli-btn" @tap="goLogin">
+        <text class="nli-btn-text">去登录</text>
+      </view>
+    </view>
+
+    <template v-else>
     <view class="header">
       <text class="page-title">🧧 我的红包</text>
     </view>
@@ -106,19 +116,26 @@
     <view v-else class="loading-container">
       <text>加载中...</text>
     </view>
+    </template>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { requireLogin } from '@/utils/auth'
 
 const loading = ref(true)
 const currentTab = ref('available')
 const available = ref<any[]>([])
 const used = ref<any[]>([])
 const expired = ref<any[]>([])
+const notLoggedIn = ref(false)
 
 onMounted(() => {
+  if (!requireLogin()) {
+    notLoggedIn.value = true
+    return
+  }
   loadRedPackets()
 })
 
@@ -177,15 +194,44 @@ function useRedPacket(rp: any) {
 }
 
 function goToClaim() {
-  uni.navigateTo({ url: '/pages/user/video/list' })
+  uni.showModal({
+    title: '🎁 领取红包',
+    content: '红包领取功能即将上线！\n\n您可以通过以下方式获取红包：\n• 参与活动\n• 邀请好友\n• 签到奖励',
+    showCancel: false,
+    confirmText: '我知道了'
+  })
+}
+
+function goLogin() {
+  uni.navigateTo({ url: '/pages/login/index' })
 }
 </script>
 
 <style lang="scss" scoped>
 .red-packet-center-page {
   min-height: 100vh;
-  background-color: #F5F5F5;
+  background-color: #FAFAFA;
 }
+
+.not-logged-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+}
+.nli-icon { font-size: 64px; }
+.nli-text { font-size: 16px; color: #999; }
+.nli-btn {
+  margin-top: 12px;
+  padding: 12px 40px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 24px;
+  cursor: pointer;
+  &:active { opacity: 0.85; }
+}
+.nli-btn-text { font-size: 16px; color: #fff; font-weight: 600; }
 
 .header {
   padding: 20px 16px;

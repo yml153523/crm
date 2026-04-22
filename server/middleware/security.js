@@ -200,6 +200,24 @@ const validateAdminRole = (req, res, next) => {
   next();
 };
 
+const validateSuperAdminRole = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      error: { code: 'UNAUTHORIZED', message: '请先登录' }
+    });
+  }
+
+  if (req.user.role !== 'super_admin') {
+    return res.status(403).json({
+      success: false,
+      error: { code: 'FORBIDDEN', message: '需要超级管理员权限' }
+    });
+  }
+
+  next();
+};
+
 module.exports = {
   limiters,
   securityHeaders,
@@ -207,5 +225,6 @@ module.exports = {
   auditLogger,
   requirePermission,
   validateAdminRole,
+  validateSuperAdminRole,
   createRateLimiter
 };

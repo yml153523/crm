@@ -1,124 +1,295 @@
 <template>
-  <view class="dashboard">
-    <!-- 顶部欢迎区域 -->
-    <view class="header">
-      <view class="welcome-info">
-        <text class="greeting">你好，{{ userName }}</text>
-        <text class="date">{{ currentDate }}</text>
-      </view>
-      <view class="header-actions">
-        <view class="action-btn" @tap="goToSettings">
-          <text class="icon">⚙️</text>
+  <view class="dashboard-container">
+    <!-- 左侧导航栏 -->
+    <view class="sidebar" :class="{ collapsed: isCollapsed, 'mobile-show': showMobileMenu }">
+      <!-- Logo区域 -->
+      <view class="sidebar-header">
+        <view class="logo" v-if="!isCollapsed">
+          <text class="logo-icon">🎯</text>
+          <text class="logo-text">CRM系统</text>
         </view>
-        <view class="action-btn logout-btn" @tap="handleLogout">
-          <text class="icon">🚪</text>
+        <text class="logo-icon-small" v-else>🎯</text>
+        <view class="collapse-btn" @tap="toggleSidebar">
+          <text>{{ isCollapsed ? '»' : '«' }}</text>
         </view>
       </view>
-    </view>
 
-    <!-- 统计卡片 -->
-    <view class="stats-grid">
-      <view class="stat-card" v-for="(item, index) in statsData" :key="index" @tap="handleStatClick(item)">
-        <view class="stat-icon" :style="{ background: item.color }">
-          <text class="icon-text">{{ item.icon }}</text>
+      <!-- 用户信息 -->
+      <view class="user-info" v-if="!isCollapsed">
+        <view class="avatar">
+          <text class="avatar-text">{{ userName.charAt(0) }}</text>
         </view>
-        <view class="stat-info">
-          <text class="stat-value">{{ item.value }}</text>
-          <text class="stat-label">{{ item.label }}</text>
+        <view class="user-details">
+          <text class="user-name">{{ userName }}</text>
+          <text class="user-role">{{ roleLabel }}</text>
         </view>
-        <text class="stat-trend" :class="{ up: item.trend > 0, down: item.trend < 0 }">
-          {{ item.trend > 0 ? '↑' : item.trend < 0 ? '↓' : '' }}{{ Math.abs(item.trend) }}%
-        </text>
       </view>
-    </view>
 
-    <!-- 快捷操作 -->
-    <view class="section card">
-      <text class="section-title">快捷操作</text>
-      <view class="quick-actions">
+      <!-- 导航菜单 -->
+      <scroll-view scroll-y class="nav-menu">
         <view 
-          class="action-item" 
-          v-for="(action, index) in actions" 
+          class="nav-item" 
+          v-for="(item, index) in menuItems" 
           :key="index"
-          @tap="navigateTo(action.path)"
+          :class="{ active: currentPath === item.path }"
+          @tap="navigateTo(item.path)"
         >
-          <view class="action-icon" :style="{ background: action.bgColor }">
-            <text>{{ action.icon }}</text>
+          <view class="nav-icon">
+            <text>{{ item.icon }}</text>
           </view>
-          <text class="action-label">{{ action.label }}</text>
-          <text class="action-desc">{{ action.desc }}</text>
-          <text class="arrow">›</text>
+          <text class="nav-label" v-if="!isCollapsed">{{ item.label }}</text>
+          <view class="nav-badge" v-if="item.badge && !isCollapsed">
+            <text>{{ item.badge }}</text>
+          </view>
+        </view>
+      </scroll-view>
+
+      <!-- 底部操作 -->
+      <view class="sidebar-footer">
+        <view class="nav-item" @tap="handleLogout" v-if="!isCollapsed">
+          <view class="nav-icon logout">
+            <text>🚪</text>
+          </view>
+          <text class="nav-label">退出登录</text>
+        </view>
+        <view class="nav-item" @tap="handleLogout" v-else>
+          <view class="nav-icon logout">
+            <text>🚪</text>
+          </view>
         </view>
       </view>
     </view>
 
-    <!-- 最近动态 -->
-    <view class="section card">
-      <view class="section-header">
-        <text class="section-title">最近动态</text>
-        <text class="more-link" @tap="goToRemind">查看全部 ›</text>
+    <!-- 主内容区域 -->
+    <view class="main-content" :class="{ expanded: isCollapsed }">
+      <!-- 顶部标题栏 -->
+      <view class="top-header">
+        <view class="header-left">
+          <!-- 移动端菜单按钮 -->
+          <view class="menu-btn" @tap="toggleMobileMenu">
+            <text>☰</text>
+          </view>
+          <text class="page-title">{{ currentPageTitle }}</text>
+        </view>
+        <view class="header-right">
+          <text class="date-time">{{ currentDate }}</text>
+        </view>
       </view>
-      
-      <view class="activity-list" v-if="recentList.length">
-        <view class="activity-item" v-for="(item, index) in recentList.slice(0, 5)" :key="index">
-          <view class="activity-dot" :style="{ background: item.color }"></view>
-          <view class="activity-content">
-            <text class="activity-text">{{ item.text }}</text>
-            <text class="activity-time">{{ item.time }}</text>
+
+      <!-- 页面内容区域 -->
+      <view class="content-area">
+        <!-- 欢迎区域（简化版） -->
+        <view class="welcome-section-compact">
+          <view class="welcome-left">
+            <text class="welcome-title">👋 您好，{{ userName }}</text>
+            <text class="welcome-subtitle">{{ currentDate }}</text>
+          </view>
+          <view class="welcome-stats">
+            <view class="ws-item">
+              <text class="ws-value">{{ statsData[0].value }}</text>
+              <text class="ws-label">会员</text>
+            </view>
+            <view class="ws-item">
+              <text class="ws-value">{{ statsData[1].value }}</text>
+              <text class="ws-label">今日新增</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 最新动态（置顶） -->
+        <view class="section card activity-section">
+          <view class="section-header">
+            <view class="sh-left">
+              <text class="section-icon">📋</text>
+              <text class="section-title">最新动态</text>
+            </view>
+            <text class="more-link" @tap="goToRemind">查看全部 ›</text>
+          </view>
+
+          <view class="activity-list" v-if="recentList.length">
+            <view class="activity-item" v-for="(item, index) in recentList.slice(0, 5)" :key="index">
+              <view class="activity-icon" :style="{ background: item.color }">
+                <text>{{ item.icon || '📌' }}</text>
+              </view>
+              <view class="activity-content">
+                <text class="activity-text">{{ item.text }}</text>
+                <text class="activity-time">{{ item.time }}</text>
+              </view>
+              <view class="activity-action" v-if="item.action" @tap="handleActivityAction(item)">
+                <text>{{ item.action }}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="empty-state" v-else>
+            <text class="empty-icon">📋</text>
+            <text class="empty-text">暂无最新动态</text>
+            <text class="empty-hint">系统运行正常</text>
+          </view>
+        </view>
+
+        <!-- 待办事项（精心设计） -->
+        <view class="section card todo-section">
+          <view class="section-header">
+            <view class="sh-left">
+              <text class="section-icon">⚡</text>
+              <text class="section-title">待办事项</text>
+              <view class="todo-badge" v-if="todoCount > 0">
+                <text>{{ todoCount }}</text>
+              </view>
+            </view>
+            <view class="header-actions">
+              <text class="action-link" @tap="addTodo">＋添加</text>
+            </view>
+          </view>
+
+          <view class="todo-list-modern" v-if="todoList.length">
+            <view
+              class="todo-card"
+              :class="{ done: item.done, urgent: item.urgent }"
+              v-for="(item, index) in todoList"
+              :key="index"
+            >
+              <view class="todo-priority" :class="'priority-' + (item.priority || 'normal')"></view>
+              <view class="todo-main" @tap="toggleTodo(index)">
+                <view class="todo-checkbox" :class="{ checked: item.done }">
+                  <text v-if="item.done">✓</text>
+                </view>
+                <view class="todo-info">
+                  <text class="todo-text" :class="{ done: item.done }">{{ item.text }}</text>
+                  <view class="todo-meta">
+                    <text class="todo-category" v-if="item.category">{{ item.category }}</text>
+                    <text class="todo-deadline" v-if="item.deadline">📅 {{ item.deadline }}</text>
+                  </view>
+                </view>
+              </view>
+              <view class="todo-actions" @tap.stop>
+                <text class="ta-btn delete" @tap="deleteTodo(index)">🗑️</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="empty-state-todo" v-else>
+            <text class="empty-icon-big">🎉</text>
+            <text class="empty-title">太棒了！暂无待办</text>
+            <text class="empty-hint">所有任务都已完成</text>
+          </view>
+        </view>
+
+        <!-- 数据分析面板（可折叠） -->
+        <view class="section card analytics-section">
+          <view class="section-header collapsible" @tap="toggleAnalytics">
+            <view class="sh-left">
+              <text class="section-icon">📊</text>
+              <text class="section-title">数据分析</text>
+            </view>
+            <view class="collapse-indicator" :class="{ expanded: showAnalytics }">
+              <text>{{ showAnalytics ? '▲ 收起' : '▼ 展开' }}</text>
+            </view>
+          </view>
+
+          <view class="analytics-content" v-show="showAnalytics">
+            <MarketingFunnel />
+
+            <!-- 关键指标卡片 -->
+            <view class="metrics-grid">
+              <view class="metric-card" v-for="(stat, index) in statsData" :key="index">
+                <text class="metric-label">{{ stat.label }}</text>
+                <text class="metric-value" :style="{ color: stat.trend >= 0 ? '#34C759' : '#FF3B30' }">
+                  {{ stat.value }}
+                </text>
+                <view class="metric-trend" :class="stat.trend >= 0 ? 'up' : 'down'">
+                  <text>{{ stat.trend >= 0 ? '↑' : '↓' }} {{ Math.abs(stat.trend) }}%</text>
+                </view>
+              </view>
+            </view>
           </view>
         </view>
       </view>
-      
-      <view class="empty-state" v-else>
-        <text class="empty-icon">📋</text>
-        <text class="empty-text">暂无动态数据</text>
-      </view>
     </view>
 
-    <!-- 待办事项 -->
-    <view class="section card">
-      <view class="section-header">
-        <text class="section-title">待办事项</text>
-        <text class="badge" v-if="todoCount > 0">{{ todoCount }}</text>
-      </view>
-      
-      <view class="todo-list" v-if="todoList.length">
-        <view class="todo-item" v-for="(item, index) in todoList" :key="index">
-          <view class="todo-checkbox" :class="{ checked: item.done }" @tap="toggleTodo(index)">
-            <text v-if="item.done">✓</text>
-          </view>
-          <text class="todo-text" :class="{ done: item.done }">{{ item.text }}</text>
-        </view>
-      </view>
-      
-      <view class="empty-state" v-else>
-        <text class="empty-icon">✅</text>
-        <text class="empty-text">暂无待办事项</text>
-      </view>
-    </view>
-
-    <!-- 底部信息 -->
-    <view class="footer-info">
-      <text>CRM管理系统 v1.0 | 最后更新: {{ lastUpdate }}</text>
-    </view>
+    <!-- 移动端遮罩层 -->
+    <view class="mobile-overlay" v-if="showMobileMenu" @tap="closeMobileMenu"></view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import MarketingFunnel from '@/components/MarketingFunnel.vue'
+import { apiGet } from '@/utils/request'
 
+const isCollapsed = ref(false)
+const showMobileMenu = ref(false)
+const currentPath = ref('/pages/admin/dashboard')
 const userName = ref('管理员')
+const currentUserRole = ref('user')
+
+const menuItems = ref<any[]>([])
+
+const allMenuItems = [
+  // 核心业务管理
+  { icon: '👥', label: '会员管理', path: '/pages/admin/member/list', bgColor: '#667eea', role: 'admin' },
+  { icon: '🎯', label: '内容管理中心', path: '/pages/admin/content-hub', bgColor: '#FF6B35', role: 'admin', badge: 'NEW' },
+  { icon: '🧧', label: '红包管理', path: '/pages/admin/red-packet/list', bgColor: '#FF3B30', role: 'admin' },
+  { icon: '🔔', label: '提醒中心', path: '/pages/admin/remind/index', bgColor: '#43e97b', role: 'admin' },
+
+  // 数据与分析
+  { icon: '📊', label: '数据统计', path: '/pages/admin/statistics/index', bgColor: '#a18cd1', role: 'admin' },
+  { icon: '🧪', label: 'A/B测试', path: '/pages/admin/abtest/index', bgColor: '#6C5CE7', role: 'admin' },
+
+  // 系统管理
+  { icon: '📋', label: '日志中心', path: '/pages/admin/audit-log/index', bgColor: '#667eea', role: 'all' },
+
+  // 管理层功能（仅super_admin可见）
+  { icon: '👤', label: '管理员', path: '/pages/admin/admin-user/list', bgColor: '#fa709a', role: 'super_admin' },
+  { icon: '⚙️', label: '系统设置', path: '/pages/admin/settings/index', bgColor: '#fccb90', role: 'super_admin' }
+]
+
+const roleLabels: Record<string, string> = {
+  admin: '管理员',
+  super_admin: '超级管理员',
+  user: '普通用户'
+}
+
+const roleLabel = computed(() => roleLabels[currentUserRole.value] || '未知角色')
+
+const currentPageTitle = computed(() => {
+  const current = menuItems.value.find(item => item.path === currentPath.value)
+  return current?.label || '工作台'
+})
+
 const currentDate = computed(() => {
   const now = new Date()
   const days = ['日', '一', '二', '三', '四', '五', '六']
   return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 星期${days[now.getDay()]}`
 })
 
-const lastUpdate = computed(() => {
-  return new Date().toLocaleString('zh-CN')
-})
+function formatDate() {
+  const now = new Date()
+  return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`
+}
 
-// 统计数据（从API获取）
+function formatTimeAgo(dateStr: string): string {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 60) {
+    return `${minutes}分钟前`
+  } else if (hours < 24) {
+    return `${hours}小时前`
+  } else if (days < 7) {
+    return `${days}天前`
+  } else {
+    return `${date.getMonth() + 1}月${date.getDate()}日`
+  }
+}
+
+// 统计数据
 const statsData = ref([
   { icon: '👥', label: '总会员数', value: '--', color: '#667eea', trend: 0 },
   { icon: '➕', label: '今日新增', value: '--', color: '#34C759', trend: 0 },
@@ -126,133 +297,112 @@ const statsData = ref([
   { icon: '🎬', label: '视频数量', value: '--', color: '#FF3B30', trend: 0 }
 ])
 
-// 加载统计数据（从数据库真实查询）
-async function loadStatistics() {
-  try {
-    console.log('开始加载统计数据...')
-    
-    const [userRes, videoRes, courseRes] = await Promise.all([
-      // 获取用户总数 - 正确的API路径是 /api/users
-      new Promise((resolve, reject) => {
-        uni.request({
-          url: '/api/users',
-          method: 'GET',
-          data: { page: 1, pageSize: 1 },  // 只需要获取总数
-          success: (res: any) => resolve(res),
-          fail: (err: any) => reject(err)
-        })
-      }),
-      // 获取视频总数 - 正确的API路径是 /api/videos
-      new Promise((resolve, reject) => {
-        uni.request({
-          url: '/api/videos',
-          method: 'GET',
-          data: { page: 1, pageSize: 1 },  // 只需要获取总数
-          success: (res: any) => resolve(res),
-          fail: (err: any) => reject(err)
-        })
-      }),
-      // 获取课程总数 - 正确的API路径是 /api/courses
-      new Promise((resolve, reject) => {
-        uni.request({
-          url: '/api/courses',
-          method: 'GET',
-          data: { page: 1, pageSize: 1 },  // 只需要获取总数
-          success: (res: any) => resolve(res),
-          fail: (err: any) => reject(err)
-        })
-      })
-    ])
-    
-    console.log('用户API响应:', userRes.statusCode, userRes.data)
-    console.log('视频API响应:', videoRes.statusCode, videoRes.data)
-    console.log('课程API响应:', courseRes.statusCode, courseRes.data)
-    
-    // 解析用户统计 - API返回格式: { success: true, data: { list: [], pagination: { total: N } } }
-    if (userRes && userRes.data && userRes.data.success !== false) {
-      const userData = userRes.data.data || userRes.data
-      const pagination = userData.pagination || {}
-      const totalUsers = pagination.total || userData.total || 0
-      statsData.value[0].value = totalUsers.toString()
-      
-      // 今日新增：简化处理，显示总数的2%作为示例
-      const todayNew = Math.max(1, Math.floor(totalUsers * 0.02))
-      statsData.value[1].value = todayNew.toString()
-      statsData.value[1].trend = 8.3
-    } else {
-      console.warn('用户数据解析失败:', userRes?.data)
-    }
-    
-    // 解析视频统计
-    if (videoRes && videoRes.data && videoRes.data.success !== false) {
-      const videoData = videoRes.data.data || videoRes.data
-      const pagination = videoData.pagination || {}
-      const totalVideos = pagination.total || videoData.total || 0
-      statsData.value[3].value = totalVideos.toString()
-      statsData.value[3].trend = totalVideos > 0 ? 5.2 : 0
-    } else {
-      console.warn('视频数据解析失败:', videoRes?.data)
-    }
-    
-    // 解析课程统计
-    if (courseRes && courseRes.data && courseRes.data.success !== false) {
-      const courseData = courseRes.data.data || courseRes.data
-      const pagination = courseData.pagination || {}
-      const totalCourses = pagination.total || courseData.total || 0
-      statsData.value[2].value = totalCourses.toString()
-      statsData.value[2].trend = totalCourses > 0 ? 2.1 : 0
-    } else {
-      console.warn('课程数据解析失败:', courseRes?.data)
-    }
-    
-    console.log('统计数据更新完成:', statsData.value)
-    
-  } catch (error) {
-    console.error('加载统计数据失败:', error)
-    // 出错时显示默认值
-    statsData.value[0].value = '0'
-    statsData.value[1].value = '0'
-    statsData.value[2].value = '0'
-    statsData.value[3].value = '0'
+// 最近动态 - 使用动态时间
+const recentList = ref([
+  { text: '新用户 张三 注册成功', time: formatTimeAgo(new Date(Date.now() - 5 * 60000).toISOString()), color: '#E8F5E9', icon: '👤', action: '查看' },
+  { text: '用户 李四 购买了《高级销售技巧》课程', time: formatTimeAgo(new Date(Date.now() - 15 * 60000).toISOString()), color: '#E3F2FD', icon: '📚', action: '详情' },
+  { text: '管理员 发布了新课程《客户关系维护》', time: formatTimeAgo(new Date(Date.now() - 3600000).toISOString()), color: '#FFF3E0', icon: '🎯' },
+  { text: '系统自动备份完成', time: formatTimeAgo(new Date(Date.now() - 2 * 3600000).toISOString()), color: '#F5F5F5', icon: '💾' },
+  { text: '红包提醒已批量发送 (15人)', time: formatTimeAgo(new Date(Date.now() - 3 * 3600000).toISOString()), color: '#FFEBEE', icon: '🧧', action: '记录' }
+])
+
+// 数据分析面板折叠状态
+const showAnalytics = ref(false)
+
+function toggleAnalytics() {
+  showAnalytics.value = !showAnalytics.value
+}
+
+// 待办事项（增强版数据结构）
+const todoCount = computed(() => todoList.value.filter(t => !t.done).length)
+const todoList = ref([
+  {
+    text: '审核新注册会员',
+    done: false,
+    priority: 'high',
+    category: '会员管理',
+    deadline: '今天',
+    urgent: true
+  },
+  {
+    text: '更新《销售实战》封面图',
+    done: false,
+    priority: 'medium',
+    category: '内容管理',
+    deadline: '明天',
+    urgent: false
+  },
+  {
+    text: '回复用户反馈消息 (2条)',
+    done: true,
+    priority: 'low',
+    category: '客服支持',
+    deadline: '',
+    urgent: false
+  },
+  {
+    text: '生成月度运营报告',
+    done: false,
+    priority: 'high',
+    category: '数据分析',
+    deadline: '本周五',
+    urgent: true
+  }
+])
+
+function toggleSidebar() {
+  isCollapsed.value = !isCollapsed.value
+}
+
+function toggleMobileMenu() {
+  showMobileMenu.value = !showMobileMenu.value
+}
+
+function closeMobileMenu() {
+  showMobileMenu.value = false
+}
+
+function filterMenuByRole(role: string) {
+  if (role === 'super_admin') {
+    return allMenuItems.filter(item => item.role === 'super_admin' || item.role === 'all')
+  } else if (role === 'admin') {
+    return allMenuItems.filter(item => item.role === 'admin' || item.role === 'all')
+  } else {
+    return []
   }
 }
 
-// 页面加载时获取数据
-import { onMounted } from 'vue'
-onMounted(() => {
-  loadStatistics()
-})
+function initUserRole() {
+  console.log('Dashboard init - 读取用户角色...')
+  const userInfo = uni.getStorageSync('userInfo')
+  console.log('当前用户信息:', userInfo)
 
-// 快捷操作（完整版 - 包含所有功能模块）
-const actions = ref([
-  { icon: '👥', label: '会员管理', desc: '查看/编辑会员', path: '/pages/admin/member/list', bgColor: 'linear-gradient(135deg, #667eea, #764ba2)' },
-  { icon: '📚', label: '课程管理', desc: '添加/编辑课程', path: '/pages/admin/course/library', bgColor: 'linear-gradient(135deg, #f093fb, #f5576c)' },
-  { icon: '🎬', label: '视频管理', desc: '上传/管理视频', path: '/pages/admin/video/list', bgColor: 'linear-gradient(135deg, #4facfe, #00f2fe)' },
-  { icon: '🛒', label: '商品管理', desc: '上架/下架商品', path: '/pages/admin/product/list', bgColor: 'linear-gradient(135deg, #fa709a, #fee140)' },
-  { icon: '🔔', label: '提醒中心', desc: '发送消息提醒', path: '/pages/admin/remind/index', bgColor: 'linear-gradient(135deg, #43e97b, #38f9d7)' },
-  { icon: '📊', label: '数据统计', desc: '查看运营数据', path: '/pages/admin/statistics/index', bgColor: 'linear-gradient(135deg, #a18cd1, #fbc2eb)' },
-  { icon: '⚙️', label: '系统设置', desc: '配置系统参数', path: '', bgColor: 'linear-gradient(135deg, #fccb90, #d57eeb)' }
-])
+  const role = userInfo?.role || 'user'
+  currentUserRole.value = role
+  userName.value = userInfo?.name || userInfo?.username || '管理员'
+  menuItems.value = filterMenuByRole(role)
 
-// 最近动态
-const recentList = ref([
-  { text: '新用户 张三 注册成功', time: '5分钟前', color: '#34C759' },
-  { text: '用户 李四 购买了《高级销售技巧》课程', time: '15分钟前', color: '#007AFF' },
-  { text: '管理员 发布了新课程《客户关系维护》', time: '1小时前', color: '#FF9500' },
-  { text: '系统自动备份完成', time: '2小时前', color: '#999999' }
-])
+  console.log('当前角色:', role)
+  console.log('显示的菜单项数量:', menuItems.value.length)
+  console.log('显示的菜单项:', menuItems.value.map(m => m.label))
+}
 
-// 待办事项
-const todoCount = computed(() => todoList.value.filter(t => !t.done).length)
-const todoList = ref([
-  { text: '审核新注册会员 (3人待审)', done: false },
-  { text: '更新课程《销售实战》封面图', done: false },
-  { text: '回复用户反馈消息 (2条未读)', done: true },
-  { text: '生成月度运营报告', done: false }
-])
+function navigateTo(path: string) {
+  if (!path) {
+    uni.showToast({ title: '功能开发中...', icon: 'none' })
+    return
+  }
 
-function toggleTodo(index: number) {
-  todoList.value[index].done = !todoList.value[index].done
+  currentPath.value = path
+  console.log('导航到:', path)
+
+  uni.navigateTo({
+    url: path,
+    fail: (err: any) => {
+      console.error('导航失败:', err)
+      uni.showToast({ title: '页面跳转失败', icon: 'none' })
+    }
+  })
 }
 
 function handleStatClick(item: any) {
@@ -265,28 +415,54 @@ function handleStatClick(item: any) {
   }
 }
 
-function navigateTo(path: string) {
-  if (!path) {
-    uni.showToast({ title: '功能开发中...', icon: 'none' })
-    return
-  }
-  
-  console.log('导航到:', path)
-  uni.navigateTo({ 
-    url: path,
-    fail: (err: any) => {
-      console.error('导航失败:', err)
-      uni.showToast({ title: '页面跳转失败', icon: 'none' })
+function goToRemind() {
+  navigateTo('/pages/admin/remind/index')
+}
+
+function toggleTodo(index: number) {
+  todoList.value[index].done = !todoList.value[index].done
+}
+
+function addTodo() {
+  uni.showModal({
+    title: '添加待办事项',
+    editable: true,
+    placeholderText: '请输入待办事项内容...',
+    success: (res) => {
+      if (res.confirm && res.content) {
+        todoList.value.unshift({
+          text: res.content,
+          done: false,
+          priority: 'medium',
+          category: '其他',
+          deadline: '',
+          urgent: false
+        })
+        uni.showToast({ title: '✅ 已添加', icon: 'success' })
+      }
     }
   })
 }
 
-function goToSettings() {
-  uni.showToast({ title: '设置功能开发中...', icon: 'none' })
+function deleteTodo(index: number) {
+  uni.showModal({
+    title: '确认删除',
+    content: '确定要删除这个待办事项吗？',
+    success: (res) => {
+      if (res.confirm) {
+        todoList.value.splice(index, 1)
+        uni.showToast({ title: '已删除', icon: 'none' })
+      }
+    }
+  })
 }
 
-function goToRemind() {
-  uni.navigateTo({ url: '/pages/admin/remind/index' })
+function handleActivityAction(item: any) {
+  if (item.action === '查看' || item.action === '详情') {
+    navigateTo('/pages/admin/member/list')
+  } else if (item.action === '记录') {
+    navigateTo('/pages/admin/remind/index')
+  }
 }
 
 function handleLogout() {
@@ -302,157 +478,482 @@ function handleLogout() {
     }
   })
 }
+
+async function loadStatistics() {
+  try {
+    console.log('开始加载统计数据...')
+
+    // 检查是否为演示模式
+    const token = uni.getStorageSync('token') || ''
+    const isDemoMode = token.startsWith('demo-')
+
+    if (isDemoMode) {
+      console.log('[Dashboard] 演示模式，使用模拟数据')
+      // 使用模拟数据
+      statsData.value[0].value = '1,234'
+      statsData.value[0].trend = 12.5
+      statsData.value[1].value = '28'
+      statsData.value[1].trend = 8.3
+      statsData.value[2].value = '56'
+      statsData.value[2].trend = 2.1
+      statsData.value[3].value = '189'
+      statsData.value[3].trend = 5.2
+      return
+    }
+
+    const [userRes, videoRes, courseRes] = await Promise.all([
+      apiGet('/api/users', { page: 1, pageSize: 1 }),
+      apiGet('/api/videos', { page: 1, pageSize: 1 }),
+      apiGet('/api/courses', { page: 1, pageSize: 1 })
+    ])
+
+    // 解析统计数据
+    if (userRes && userRes.data && userRes.data.success !== false) {
+      const userData = userRes.data.data || userRes.data
+      const pagination = userData.pagination || {}
+      const totalUsers = pagination.total || userData.total || 0
+      statsData.value[0].value = totalUsers.toString()
+
+      const todayNew = Math.max(1, Math.floor(totalUsers * 0.02))
+      statsData.value[1].value = todayNew.toString()
+      statsData.value[1].trend = 8.3
+    }
+
+    if (videoRes && videoRes.data && videoRes.data.success !== false) {
+      const videoData = videoRes.data.data || videoRes.data
+      const pagination = videoData.pagination || {}
+      const totalVideos = pagination.total || videoData.total || 0
+      statsData.value[3].value = totalVideos.toString()
+      statsData.value[3].trend = totalVideos > 0 ? 5.2 : 0
+    }
+
+    if (courseRes && courseRes.data && courseRes.data.success !== false) {
+      const courseData = courseRes.data.data || courseRes.data
+      const pagination = courseData.pagination || {}
+      const totalCourses = pagination.total || courseData.total || 0
+      statsData.value[2].value = totalCourses.toString()
+      statsData.value[2].trend = totalCourses > 0 ? 2.1 : 0
+    }
+  } catch (error) {
+    console.error('加载统计数据失败:', error)
+    statsData.value[0].value = '0'
+    statsData.value[1].value = '0'
+    statsData.value[2].value = '0'
+    statsData.value[3].value = '0'
+  }
+}
+
+onMounted(() => {
+  initUserRole()
+  loadStatistics()
+})
 </script>
 
 <style scoped>
-.dashboard {
+.dashboard-container {
+  display: flex;
   min-height: 100vh;
   background-color: #F5F6FA;
-  padding-bottom: 40rpx;
 }
 
-.header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 60rpx 32rpx 40rpx;
+/* 左侧导航栏 */
+.sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar-header {
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  font-size: 32px;
+}
+
+.logo-text {
+  font-size: 22px;
+  font-weight: bold;
+  color: #FFFFFF;
+  letter-spacing: 1px;
+}
+
+.logo-icon-small {
+  font-size: 28px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.collapse-btn {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  text {
+    color: #FFFFFF;
+    font-size: 16px;
+  }
+
+  &:active {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* 用户信息 */
+.user-info {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .avatar-text {
+    color: #FFFFFF;
+    font-size: 20px;
+    font-weight: bold;
+  }
+}
+
+.user-details {
+  flex: 1;
+
+  .user-name {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin-bottom: 4px;
+  }
+
+  .user-role {
+    display: block;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+}
+
+/* 导航菜单 */
+.nav-menu {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 24px;
+  margin: 4px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+
+    .nav-label {
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+  }
+}
+
+.nav-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  background: rgba(255, 255, 255, 0.1);
+
+  text {
+    font-size: 18px;
+  }
+
+  &.logout {
+    background: rgba(255, 59, 48, 0.2);
+  }
+}
+
+.nav-label {
+  flex: 1;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+  transition: all 0.2s ease;
+}
+
+.nav-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #FF3B30;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text {
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 600;
+  }
+}
+
+/* 底部操作 */
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 主内容区域 */
+.main-content {
+  flex: 1;
+  margin-left: 260px;
+  transition: margin-left 0.3s ease;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content.expanded {
+  margin-left: 80px;
+}
+
+/* 顶部标题栏 */
+.top-header {
+  background: #FFFFFF;
+  padding: 20px 32px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-.welcome-info {
-  .greeting {
-    font-size: 40rpx;
-    font-weight: bold;
-    color: #FFFFFF;
-    display: block;
-    margin-bottom: 8rpx;
-  }
-  
-  .date {
-    font-size: 26rpx;
-    color: rgba(255, 255, 255, 0.8);
-  }
+.page-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #1A1A1A;
 }
 
-.header-actions {
+.header-right {
   display: flex;
-  gap: 16rpx;
-  
-  .action-btn {
-    width: 72rpx;
-    height: 72rpx;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    &:active {
-      transform: scale(0.95);
-    }
+  align-items: center;
+  gap: 20px;
+}
+
+.date-time {
+  font-size: 14px;
+  color: #666666;
+}
+
+.header-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #F5F5F5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  text {
+    font-size: 20px;
   }
-  
-  .icon {
-    font-size: 32rpx;
-  }
-  
-  .logout-btn {
-    background: rgba(255, 59, 48, 0.3);
-    
-    &:active {
-      background: rgba(255, 59, 48, 0.5);
-    }
+
+  &:active {
+    background: #E8E8E8;
   }
 }
 
+/* 内容区域 */
+.content-area {
+  flex: 1;
+  padding: 24px 32px;
+  overflow-y: auto;
+}
+
+/* 统计卡片 */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20rpx;
-  padding: 24rpx;
-  margin-top: -30rpx;
-  position: relative;
-  z-index: 10;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
 .stat-card {
   background: #FFFFFF;
-  border-radius: 20rpx;
-  padding: 28rpx 24rpx;
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
   align-items: center;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
-  
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+
   &:active {
     transform: scale(0.98);
   }
 }
 
 .stat-icon {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 20rpx;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 20rpx;
-  
+  margin-right: 20px;
+
   .icon-text {
-    font-size: 36rpx;
+    font-size: 28px;
   }
 }
 
 .stat-info {
   flex: 1;
-  
+
   .stat-value {
-    font-size: 44rpx;
+    font-size: 32px;
     font-weight: bold;
     color: #1A1A1A;
     display: block;
   }
-  
+
   .stat-label {
-    font-size: 26rpx;
+    font-size: 14px;
     color: #666666;
-    margin-top: 4rpx;
+    margin-top: 4px;
     display: block;
   }
 }
 
 .stat-trend {
-  font-size: 24rpx;
-  margin-left: 12rpx;
-  
+  font-size: 14px;
+  font-weight: 600;
+
   &.up { color: #34C759; }
   &.down { color: #FF3B30; }
 }
 
+/* 欢迎区域 */
+.welcome-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin-bottom: 24px;
+  padding: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.welcome-content {
+  .welcome-title {
+    display: block;
+    font-size: 24px;
+    font-weight: bold;
+    color: #FFFFFF;
+    margin-bottom: 8px;
+  }
+
+  .welcome-desc {
+    display: block;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.85);
+  }
+}
+
+.quick-stats {
+  display: flex;
+  gap: 32px;
+}
+
+.quick-stat-item {
+  text-align: center;
+
+  .qs-value {
+    display: block;
+    font-size: 28px;
+    font-weight: bold;
+    color: #FFFFFF;
+  }
+
+  .qs-label {
+    display: block;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.75);
+    margin-top: 4px;
+  }
+}
+
+/* 卡片通用样式 */
 .section {
-  margin: 24rpx;
   background: #FFFFFF;
-  border-radius: 20rpx;
-  padding: 28rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24rpx;
+  margin-bottom: 20px;
 }
 
 .section-title {
-  font-size: 34rpx;
+  font-size: 18px;
   font-weight: bold;
   color: #1A1A1A;
 }
 
 .more-link {
-  font-size: 26rpx;
+  font-size: 14px;
   color: #667eea;
-  
+
   &:active {
     opacity: 0.7;
   }
@@ -461,142 +962,92 @@ function handleLogout() {
 .badge {
   background: #FF3B30;
   color: #FFFFFF;
-  font-size: 22rpx;
-  padding: 4rpx 12rpx;
-  border-radius: 20rpx;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 12px;
   font-weight: 600;
 }
 
-.quick-actions {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20rpx;
-}
-
-.action-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24rpx 12rpx;
-  border-radius: 16rpx;
-  background: #F8F9FB;
-  
-  &:active {
-    background: #E8ECF1;
-    transform: scale(0.97);
-  }
-}
-
-.action-icon {
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 22rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 12rpx;
-  
-  text {
-    font-size: 40rpx;
-  }
-}
-
-.action-label {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #333333;
-  margin-bottom: 4rpx;
-}
-
-.action-desc {
-  font-size: 22rpx;
-  color: #999999;
-}
-
-.arrow {
-  font-size: 28rpx;
-  color: #CCCCCC;
-  margin-top: 8rpx;
-}
-
+/* 动态列表 */
 .activity-list {
   .activity-item {
     display: flex;
     align-items: flex-start;
-    padding: 20rpx 0;
+    padding: 16px 0;
     border-bottom: 1rpx solid #F0F0F0;
-    
+
     &:last-child {
       border-bottom: none;
     }
   }
-  
+
   .activity-dot {
-    width: 12rpx;
-    height: 12rpx;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    margin-right: 16rpx;
-    margin-top: 10rpx;
+    margin-right: 16px;
+    margin-top: 6px;
     flex-shrink: 0;
   }
-  
+
   .activity-content {
     flex: 1;
-    
+
     .activity-text {
-      font-size: 28rpx;
+      font-size: 15px;
       color: #333333;
       display: block;
     }
-    
+
     .activity-time {
-      font-size: 24rpx;
+      font-size: 13px;
       color: #999999;
-      margin-top: 4rpx;
+      margin-top: 4px;
       display: block;
     }
   }
 }
 
+/* 待办列表 */
 .todo-list {
   .todo-item {
     display: flex;
     align-items: center;
-    padding: 20rpx 0;
+    padding: 16px 0;
     border-bottom: 1rpx solid #F0F0F0;
-    
+
     &:last-child {
       border-bottom: none;
     }
   }
-  
+
   .todo-checkbox {
-    width: 40rpx;
-    height: 40rpx;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    border: 3rpx solid #DDDDDD;
-    margin-right: 20rpx;
+    border: 2px solid #DDDDDD;
+    margin-right: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    
+
     &.checked {
       background: #34C759;
       border-color: #34C759;
     }
-    
+
     text {
       color: #FFFFFF;
-      font-size: 24rpx;
+      font-size: 18px;
       font-weight: bold;
     }
   }
-  
+
   .todo-text {
     flex: 1;
-    font-size: 28rpx;
+    font-size: 15px;
     color: #333333;
-    
+
     &.done {
       color: #999999;
       text-decoration: line-through;
@@ -604,29 +1055,682 @@ function handleLogout() {
   }
 }
 
+/* 空状态 */
 .empty-state {
-  padding: 60rpx 0;
+  padding: 48px 0;
   text-align: center;
-  
+
   .empty-icon {
-    font-size: 64rpx;
+    font-size: 48px;
     display: block;
-    margin-bottom: 16rpx;
+    margin-bottom: 12px;
   }
-  
+
   .empty-text {
-    font-size: 28rpx;
+    font-size: 15px;
     color: #999999;
   }
 }
 
-.footer-info {
-  text-align: center;
-  padding: 40rpx 0;
-  
-  text {
-    font-size: 22rpx;
-    color: #CCCCCC;
+/* 响应式适配 */
+@media screen and (max-width: 1024px) {
+  .sidebar {
+    width: 80px;
   }
+
+  .sidebar .logo-text,
+  .sidebar .nav-label,
+  .sidebar .user-details,
+  .sidebar-footer .nav-label {
+    display: none;
+  }
+
+  .main-content {
+    margin-left: 80px;
+  }
+}
+
+/* 移动端适配 (≤768px) */
+@media screen and (max-width: 768px) {
+  .dashboard-container {
+    overflow-x: hidden;
+  }
+
+  .sidebar {
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: none;
+  }
+
+  .sidebar.mobile-show {
+    transform: translateX(0);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+  }
+
+  /* 显示侧边栏内的所有文字 */
+  .sidebar.mobile-show .logo-text,
+  .sidebar.mobile-show .nav-label,
+  .sidebar.mobile-show .user-details,
+  .sidebar.mobile-show .nav-badge,
+  .sidebar.mobile-show .sidebar-footer .nav-label {
+    display: block !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
+  .top-header {
+    padding: 12px 16px;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  /* 汉堡菜单按钮 */
+  .menu-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #F5F5F5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+
+    text {
+      font-size: 20px;
+      color: #333333;
+    }
+
+    &:active {
+      background: #E8E8E8;
+    }
+  }
+
+  /* 遮罩层 */
+  .mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+
+  .content-area {
+    padding: 16px;
+  }
+
+  /* 统计卡片 - 改为2列或1列 */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    padding: 16px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    margin-right: 0;
+    margin-bottom: 12px;
+
+    .icon-text {
+      font-size: 24px;
+    }
+  }
+
+  .stat-info {
+    .stat-value {
+      font-size: 24px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+    }
+  }
+
+  .stat-trend {
+    display: none; /* 移动端隐藏趋势箭头 */
+  }
+
+  /* 欢迎区域 - 改为垂直布局 */
+  .welcome-section {
+    flex-direction: column;
+    padding: 24px 20px;
+    text-align: center;
+  }
+
+  .welcome-content {
+    margin-bottom: 20px;
+
+    .welcome-title {
+      font-size: 20px;
+    }
+
+    .welcome-desc {
+      font-size: 14px;
+    }
+  }
+
+  .quick-stats {
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .quick-stat-item {
+    .qs-value {
+      font-size: 24px;
+    }
+
+    .qs-label {
+      font-size: 12px;
+    }
+  }
+
+  /* 卡片样式调整 */
+  .section {
+    padding: 20px 16px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+  }
+
+  .section-header {
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 16px;
+  }
+
+  /* 动态列表 */
+  .activity-list .activity-item {
+    padding: 12px 0;
+  }
+
+  .activity-list .activity-dot {
+    width: 8px;
+    height: 8px;
+    margin-top: 5px;
+  }
+
+  .activity-list .activity-content .activity-text {
+    font-size: 14px;
+  }
+
+  .activity-list .activity-content .activity-time {
+    font-size: 12px;
+  }
+
+  /* 待办列表 */
+  .todo-list .todo-item {
+    padding: 12px 0;
+  }
+
+  .todo-list .todo-checkbox {
+    width: 32px;
+    height: 32px;
+  }
+
+  .todo-list .todo-text {
+    font-size: 14px;
+  }
+
+  /* 空状态 */
+  .empty-state {
+    padding: 32px 0;
+
+    .empty-icon {
+      font-size: 40px;
+    }
+
+    .empty-text {
+      font-size: 14px;
+    }
+  }
+
+  /* 隐藏桌面端的折叠按钮 */
+  .collapse-btn {
+    display: none;
+  }
+
+  /* 日期时间在超小屏幕隐藏 */
+  .date-time {
+    display: none;
+  }
+
+  /* 用户信息调整 */
+  .user-info {
+    padding: 16px;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+
+    .avatar-text {
+      font-size: 18px;
+    }
+  }
+
+  /* 导航项间距调整 */
+  .nav-item {
+    padding: 12px 20px;
+    margin: 2px 8px;
+  }
+
+  .nav-icon {
+    width: 32px;
+    height: 32px;
+
+    text {
+      font-size: 16px;
+    }
+  }
+
+  .nav-label {
+    font-size: 14px;
+  }
+}
+
+/* 超小屏幕 (≤480px) */
+@media screen and (max-width: 480px) {
+  .top-header {
+    padding: 10px 12px;
+  }
+
+  .page-title {
+    font-size: 16px;
+  }
+
+  .content-area {
+    padding: 12px;
+  }
+
+  .menu-btn {
+    width: 32px;
+    height: 32px;
+
+    text {
+      font-size: 18px;
+    }
+  }
+
+  /* 统计卡片改为单列 */
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-section {
+    padding: 20px 16px;
+  }
+
+  .welcome-content .welcome-title {
+    font-size: 18px;
+  }
+
+  .quick-stats {
+    gap: 20px;
+  }
+
+  .quick-stat-item .qs-value {
+    font-size: 22px;
+  }
+
+  .section {
+    padding: 16px 12px;
+  }
+
+  .sidebar {
+    width: 100%; /* 超小屏全宽侧边栏 */
+  }
+}
+
+/* 欢迎区域（紧凑版） */
+.welcome-section-compact {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+}
+
+.welcome-left {
+  flex: 1;
+}
+
+.welcome-title {
+  font-size: 22px;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.welcome-subtitle {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.welcome-stats {
+  display: flex;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 12px 20px;
+}
+
+.ws-item {
+  text-align: center;
+}
+
+.ws-value {
+  font-size: 24px;
+  font-weight: bold;
+  display: block;
+}
+
+.ws-label {
+  font-size: 11px;
+  opacity: 0.8;
+  display: block;
+  margin-top: 2px;
+}
+
+/* 最新动态区域 */
+.activity-section {
+  margin-bottom: 16px;
+}
+
+.sh-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-icon {
+  font-size: 18px;
+}
+
+.section-header.collapsible {
+  cursor: pointer;
+  user-select: none;
+}
+
+.collapse-indicator {
+  background: #F0F0F0;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #666666;
+  transition: all 0.2s;
+}
+
+.collapse-indicator.expanded {
+  background: #E8EFFF;
+  color: #007AFF;
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.activity-action {
+  background: #007AFF;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.empty-hint {
+  font-size: 13px;
+  color: #999999;
+  display: block;
+  margin-top: 4px;
+}
+
+/* 待办事项（现代化设计） */
+.todo-section {
+  margin-bottom: 16px;
+}
+
+.todo-badge {
+  background: #FF3B30;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-link {
+  color: #007AFF;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.todo-list-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.todo-card {
+  background: #FAFBFC;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-left: 4px solid #E0E0E0;
+  transition: all 0.2s ease;
+}
+
+.todo-card.urgent {
+  border-left-color: #FF3B30;
+  background: #FFF5F5;
+}
+
+.todo-card.done {
+  opacity: 0.6;
+  background: #F5F5F5;
+}
+
+.todo-priority {
+  width: 4px;
+  height: 40px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.todo-priority.priority-high {
+  background: #FF3B30;
+}
+
+.todo-priority.priority-medium {
+  background: #FF9500;
+}
+
+.todo-priority.priority-low {
+  background: #34C759;
+}
+
+.todo-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.todo-info {
+  flex: 1;
+}
+
+.todo-text {
+  font-size: 15px;
+  color: #333333;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.todo-text.done {
+  text-decoration: line-through;
+  color: #999999;
+}
+
+.todo-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.todo-category {
+  font-size: 12px;
+  color: #007AFF;
+  background: #E8F5FE;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.todo-deadline {
+  font-size: 12px;
+  color: #666666;
+}
+
+.todo-actions {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.todo-card:hover .todo-actions {
+  opacity: 1;
+}
+
+.ta-btn {
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+}
+
+.ta-btn.delete:hover {
+  transform: scale(1.1);
+}
+
+.empty-state-todo {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-icon-big {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.empty-title {
+  font-size: 16px;
+  color: #333333;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* 数据分析面板 */
+.analytics-section {
+  margin-bottom: 16px;
+}
+
+.analytics-content {
+  margin-top: 16px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.metric-card {
+  background: linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.metric-label {
+  font-size: 13px;
+  color: #666666;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.metric-value {
+  font-size: 28px;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.metric-trend {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.metric-trend.up {
+  background: #E8F5E9;
+  color: #34C759;
+}
+
+.metric-trend.down {
+  background: #FFEBEE;
+  color: #FF3B30;
 }
 </style>

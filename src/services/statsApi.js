@@ -2,31 +2,42 @@ const BASE_URL = '/api/admin/red-packets/stats';
 
 const statsApi = {
   async request(endpoint, options = {}) {
+    const token = uni.getStorageSync('token');
     const url = `${BASE_URL}${endpoint}`;
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-      },
-      ...options
-    };
-
-    try {
-      const response = await fetch(url, config);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw {
-          status: response.status,
-          message: data.message || '请求失败'
-        };
-      }
-
-      return data;
-    } catch (error) {
-      console.error(`统计数据API请求失败 [${endpoint}]:`, error);
-      throw error;
-    }
+    
+    return new Promise((resolve, reject) => {
+      uni.request({
+        url: url,
+        method: options.method || 'GET',
+        data: options.data || {},
+        header: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+          ...options.headers
+        },
+        success: (res) => {
+          const data = res.data;
+          
+          if (data.success !== false) {
+            resolve(data);
+          } else {
+            uni.showToast({
+              title: data.message || '请求失败',
+              icon: 'none'
+            });
+            reject(new Error(data.message || '请求失败'));
+          }
+        },
+        fail: (err) => {
+          console.error(`统计数据API请求失败 [${endpoint}]:`, err);
+          uni.showToast({
+            title: '网络错误，请稍后重试',
+            icon: 'none'
+          });
+          reject(err);
+        }
+      });
+    });
   },
 
   getDashboard(redPacketId) {

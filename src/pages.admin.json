@@ -1,59 +1,109 @@
-// 管理端构建配置（8080端口 - PC管理后台）- 完整版
+// 管理端构建配置（8081端口 - PC管理后台）- 完整版
 {
   "pages": [
     {
       "path": "pages/admin/login",
       "style": {
-        "navigationBarTitleText": "管理员登录",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "管理员登录"
       }
     },
     {
       "path": "pages/admin/dashboard",
       "style": {
-        "navigationBarTitleText": "工作台"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/admin/content-hub",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "showBack": true
       }
     },
     {
       "path": "pages/admin/member/list",
       "style": {
-        "navigationBarTitleText": "会员管理"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
       }
     },
     {
       "path": "pages/admin/course/library",
       "style": {
-        "navigationBarTitleText": "课程管理"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
       }
     },
     {
       "path": "pages/admin/video/list",
       "style": {
-        "navigationBarTitleText": "视频管理"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
       }
     },
     {
       "path": "pages/admin/remind/index",
       "style": {
-        "navigationBarTitleText": "提醒中心"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/admin/red-packet/list",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
       }
     },
     {
       "path": "pages/admin/statistics/index",
       "style": {
-        "navigationBarTitleText": "数据统计"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
       }
     },
     {
       "path": "pages/admin/product/list",
       "style": {
-        "navigationBarTitleText": "商品管理"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/admin/audit-log/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/admin/admin-user/list",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/admin/settings/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/admin/profile/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
       }
     }
   ],
   "globalStyle": {
     "navigationBarTextStyle": "white",
-    "navigationBarTitleText": "CRM管理系统",
+    "navigationBarTitleText": "",
     "navigationBarBackgroundColor": "#1A1A2E",
     "backgroundColor": "#F5F6FA"
   }

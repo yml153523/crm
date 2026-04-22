@@ -64,8 +64,56 @@ const errorHandler = (err, req, res, next) => {
 
   if (statusCode >= 500) {
     logCriticalError(err, req, response);
+    logErrorToAudit(err, req, response);
   }
 };
+
+async function logErrorToAudit(err, req, response) {
+  try {
+    const AuditLog = require('../models/AuditLog');
+    
+    const auditLogData = {
+      action: `ERROR ${req.method} ${req.path}`,
+      resource: 'system_error',
+      method: req.method,
+      path: req.originalUrl,
+      userId: req.user?.id || null,
+      userRole: req.user?.role || null,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent'),
+      requestBody: shouldLogErrorBody(req) ? sanitizeForAudit(req.body) : null,
+      statusCode: response.status || 500,
+      responseTime: 0,
+      success: false,
+      errorMessage: err.message,
+      timestamp: new Date()
+    };
+
+    await AuditLog.create(auditLogData);
+  } catch (error) {
+    console.error('保存错误审计日志失败:', error.message);
+  }
+}
+
+function shouldLogErrorBody(req) {
+  const sensitivePaths = ['/login', '/register', '/auth'];
+  return !sensitivePaths.some(p => req.path.includes(p));
+}
+
+function sanitizeForAudit(body) {
+  if (!body || typeof body !== 'object') return undefined;
+
+  const sanitized = { ...body };
+  const sensitiveFields = ['password', 'token', 'secret', 'creditCard', 'cvv'];
+
+  sensitiveFields.forEach(field => {
+    if (sanitized[field]) {
+      sanitized[field] = '***';
+    }
+  });
+
+  return sanitized;
+}
 
 function getFriendlyMessage(errorCode) {
   const messages = {
