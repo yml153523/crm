@@ -2,7 +2,7 @@
   <view class="recharge-page">
     <!-- 自定义导航栏 -->
     <view class="custom-nav-bar">
-      <view class="nav-back" @tap="goBack">
+      <view class="nav-back" @click="goBack">
         <text class="back-icon">←</text>
       </view>
       <text class="nav-title">充值中心</text>
@@ -13,7 +13,7 @@
     <view class="not-logged-in" v-if="notLoggedIn">
       <text class="nli-icon">🔒</text>
       <text class="nli-text">请先登录后使用充值功能</text>
-      <view class="nli-btn" @tap="goLogin">
+      <view class="nli-btn" @click="goLogin">
         <text class="nli-btn-text">去登录</text>
       </view>
     </view>
@@ -35,7 +35,7 @@
           :class="{ active: selectedAmount === item.value }"
           v-for="(item, index) in amountList"
           :key="index"
-          @tap="selectedAmount = item.value"
+          @click="selectedAmount = item.value"
         >
           <text class="value">¥{{ item.value }}</text>
           <text class="bonus" v-if="item.bonus">送¥{{ item.bonus }}</text>
@@ -43,7 +43,7 @@
         </view>
       </view>
       
-      <view class="pay-btn" :class="{ paying }" @tap="handlePay">
+      <view class="pay-btn" :class="{ paying }" @click="handlePay">
         <text>{{ paying ? '处理中...' : '立即充值' }}</text>
       </view>
     </view>

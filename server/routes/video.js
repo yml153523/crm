@@ -183,17 +183,20 @@ router.post('/upload', upload.single('video'), async (req, res) => {
     if (videoTitle.includes('.mp4') || videoTitle.includes('.mov') || videoTitle.includes('.avi')) {
       videoTitle = videoTitle.replace(/\.[^.]+$/, '')
     }
+    if (videoTitle.length > 200) {
+      videoTitle = videoTitle.substring(0, 200)
+    }
 
     const duration = await getVideoDuration(req.file.path)
 
     const video = await Video.create({
       title: videoTitle,
-      description: description || '',
+      description: (description || '').trim(),
       cover: '',
       videoUrl: `/uploads/videos/${req.file.filename}`,
       size: req.file.size,
       duration: duration,
-      category: category || '其他',
+      category: (category || '其他').trim(),
       status: 'published',
       isRecommended: isRecommended === 'true' || isRecommended === true,
       uploadedBy: null,
@@ -288,7 +291,7 @@ router.put('/:id', async (req, res) => {
       responseTime: Date.now() - startTime,
       requestBody: { action: 'update', videoId: req.params.id }
     })
-    res.status(500).json({ success: false, message: '更新失败' })
+    res.status(500).json({ success: false, message: '更新失败: ' + error.message })
   }
 })
 
@@ -352,21 +355,31 @@ router.delete('/:id', async (req, res) => {
 router.post('/progress', async (req, res) => {
   try {
     const { videoId, progress } = req.body
-    
+
+    if (!videoId) {
+      return res.status(400).json({ success: false, message: '视频ID不能为空' })
+    }
+
+    const numProgress = parseFloat(progress)
+    if (isNaN(numProgress) || numProgress < 0 || numProgress > 100) {
+      return res.status(400).json({ success: false, message: '进度值必须在0-100之间' })
+    }
+
     const video = await Video.findById(videoId)
     if (!video) {
       return res.status(404).json({ success: false, message: '视频不存在' })
     }
 
-    if (progress >= 90) {
+    if (numProgress >= 90) {
       video.completionCount += 1
       await video.save()
     }
 
+    console.log(`[Video] 进度更新: videoId=${videoId} progress=${numProgress}%`)
     res.json({ success: true, message: '进度已记录' })
   } catch (error) {
     console.error('记录进度错误:', error)
-    res.status(500).json({ success: false, message: '记录进度失败' })
+    res.status(500).json({ success: false, message: '记录进度失败: ' + error.message })
   }
 })
 

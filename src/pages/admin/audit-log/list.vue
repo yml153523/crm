@@ -42,7 +42,7 @@
     </view>
 
     <view class="log-list">
-      <view class="log-card card" v-for="(log, index) in logList" :key="index" @tap="goToDetail(log._id)">
+      <view class="log-card card" v-for="(log, index) in logList" :key="index" @click="goToDetail(log._id)">
         <view class="log-header">
           <view class="log-type-badge" :class="getActionTypeClass(log.actionType)">
             <text class="type-icon">{{ getActionTypeIcon(log.actionType) }}</text>

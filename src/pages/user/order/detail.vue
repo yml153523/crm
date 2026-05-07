@@ -26,7 +26,7 @@
         </view>
         <view class="info-item" v-if="order.transactionId">
           <text class="label">交易号</text>
-          <text class="value copyable" @tap="copyText(order.transactionId)">{{ order.transactionId }}</text>
+          <text class="value copyable" @click="copyText(order.transactionId)">{{ order.transactionId }}</text>
         </view>
       </view>
     </view>
@@ -94,19 +94,19 @@
       <button 
         class="action-btn btn-pay"
         v-if="order.status === 'pending_payment'"
-        @tap="payOrder"
+        @click="payOrder"
       >立即支付</button>
       
       <button 
         class="action-btn btn-cancel"
         v-if="order.status === 'pending_payment'"
-        @tap="cancelOrder"
+        @click="cancelOrder"
       >取消订单</button>
 
       <button 
         class="action-btn btn-confirm"
         v-if="order.status === 'delivered'"
-        @tap="confirmOrder"
+        @click="confirmOrder"
       >确认收货</button>
     </view>
   </view>
@@ -117,6 +117,7 @@
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, onMounted } from 'vue'
 
 const order = ref<any>(null)
@@ -139,11 +140,11 @@ async function loadOrderDetail(id: string) {
     if ((res.data as any)?.success) {
       order.value = (res.data as any).data.order
     } else {
-      uni.showToast({ title: (res.data as any)?.message || '加载失败', icon: 'none' })
+      uni.showToast({ title: (res.data as any)?.message || '加载失败', icon: TOAST_ICON.NONE })
     }
   } catch (error) {
     console.error('加载订单详情失败:', error)
-    uni.showToast({ title: '网络错误', icon: 'none' })
+    uni.showToast({ title: MESSAGES.COMMON.NETWORK_ERROR_SHORT, icon: TOAST_ICON.NONE })
   } finally {
     uni.hideLoading()
   }
@@ -211,11 +212,11 @@ async function payOrder() {
             uni.showToast({ title: '支付成功', icon: 'success' })
             setTimeout(() => loadOrderDetail(order.value._id), 1000)
           } else {
-            uni.showToast({ title: (result.data as any)?.message || '支付失败', icon: 'none' })
+            uni.showToast({ title: (result.data as any)?.message || '支付失败', icon: TOAST_ICON.NONE })
           }
         } catch (error) {
           uni.hideLoading()
-          uni.showToast({ title: '网络错误', icon: 'none' })
+          uni.showToast({ title: MESSAGES.COMMON.NETWORK_ERROR_SHORT, icon: TOAST_ICON.NONE })
         }
       }
     }
@@ -235,7 +236,7 @@ async function cancelOrder() {
           uni.showToast({ title: '已取消', icon: 'success' })
           setTimeout(() => uni.navigateBack(), 1000)
         } catch (error) {
-          uni.showToast({ title: '操作失败', icon: 'none' })
+          uni.showToast({ title: '操作失败', icon: TOAST_ICON.NONE })
         }
       }
     }
@@ -255,7 +256,7 @@ async function confirmOrder() {
           uni.showToast({ title: '确认成功', icon: 'success' })
           setTimeout(() => loadOrderDetail(order.value._id), 1000)
         } catch (error) {
-          uni.showToast({ title: '操作失败', icon: 'none' })
+          uni.showToast({ title: '操作失败', icon: TOAST_ICON.NONE })
         }
       }
     }

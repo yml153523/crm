@@ -47,7 +47,7 @@
           :class="{ active: selectedVariant === index }"
           v-for="(variant, index) in product.variants" 
           :key="index"
-          @tap="selectVariant(index)"
+          @click="selectVariant(index)"
         >
           <text class="variant-name">{{ variant.name }}</text>
           <text class="variant-price">¥{{ variant.price?.toFixed(2) }}</text>
@@ -58,9 +58,9 @@
     <view class="quantity-section">
       <text class="section-title">购买数量</text>
       <view class="quantity-control">
-        <button class="qty-btn" @tap="decreaseQty">-</button>
+        <button class="qty-btn" @click="decreaseQty">-</button>
         <text class="qty-value">{{ quantity }}</text>
-        <button class="qty-btn" @tap="increaseQty">+</button>
+        <button class="qty-btn" @click="increaseQty">+</button>
       </view>
     </view>
 
@@ -71,14 +71,14 @@
 
     <view class="related-video" v-if="product.relatedVideoId">
       <text class="section-title">相关视频介绍</text>
-      <view class="video-card" @tap="goToVideo(product.relatedVideoId)">
+      <view class="video-card" @click="goToVideo(product.relatedVideoId)">
         <text class="video-link-text">📹 查看产品视频介绍 →</text>
       </view>
     </view>
 
     <view class="bottom-bar">
-      <button class="btn-cart" @tap="addToCart">加入购物车</button>
-      <button class="btn-buy" @tap="buyNow">立即购买</button>
+      <button class="btn-cart" @click="addToCart">加入购物车</button>
+      <button class="btn-buy" @click="buyNow">立即购买</button>
     </view>
   </view>
 
@@ -88,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, computed, onMounted } from 'vue'
 
 const product = ref<any>(null)
@@ -132,7 +133,7 @@ async function loadProductDetail(id: string) {
     }
   } catch (error) {
     console.error('加载商品详情失败:', error)
-    uni.showToast({ title: '加载失败', icon: 'none' })
+    uni.showToast({ title: '加载失败', icon: TOAST_ICON.NONE })
   } finally {
     uni.hideLoading()
   }
@@ -168,12 +169,12 @@ function addToCart() {
       if (res.data?.success) {
         uni.showToast({ title: '已加入购物车', icon: 'success' })
       } else {
-        uni.showToast({ title: res.data?.message || '添加失败', icon: 'none' })
+        uni.showToast({ title: res.data?.message || '添加失败', icon: TOAST_ICON.NONE })
       }
     },
     fail: () => {
       uni.hideLoading()
-      uni.showToast({ title: '网络错误', icon: 'none' })
+      uni.showToast({ title: MESSAGES.COMMON.NETWORK_ERROR_SHORT, icon: TOAST_ICON.NONE })
     }
   })
 }
@@ -194,12 +195,12 @@ function buyNow() {
 
 function checkStock(): boolean {
   if (!product.value) {
-    uni.showToast({ title: '商品信息加载中', icon: 'none' })
+    uni.showToast({ title: MESSAGES.COMMON.PRODUCT_LOADING, icon: TOAST_ICON.NONE })
     return false
   }
   
   if (product.value.stock < quantity.value) {
-    uni.showToast({ title: `库存仅剩${product.value.stock}件`, icon: 'none' })
+    uni.showToast({ title: `库存仅剩${product.value.stock}件`, icon: TOAST_ICON.NONE })
     return false
   }
   

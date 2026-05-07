@@ -7,6 +7,13 @@ interface RequestOptions {
   skipAuthRedirect?: boolean  // 新增：跳过401自动跳转（用于游客模式）
 }
 
+interface ApiResponse<T = unknown> {
+  success: boolean
+  code?: number
+  data: T
+  message?: string
+}
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 function getToken(): string {
@@ -19,17 +26,19 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
   }
 
   return new Promise((resolve, reject) => {
+    const token = getToken() || ''
+
     uni.request({
       url: BASE_URL + options.url,
       method: options.method || 'GET',
       data: options.data,
       header: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`,
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...options.header
       },
       success: (res) => {
-        const data = res.data as any
+        const data = res.data as ApiResponse<T>
         
         if (data.success) {
           resolve(data)

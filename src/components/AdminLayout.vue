@@ -1,191 +1,128 @@
 <template>
   <view class="admin-layout">
-    <!-- 遮罩层 -->
     <view
       class="mobile-overlay"
-      v-if="showMobileMenu"
-      @tap.stop.prevent="closeMobileMenu"
+      :class="{ 'overlay-visible': showMobileMenu }"
+      @click="closeMobileMenu"
       @touchmove.stop.prevent
-      style="
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0, 0, 0, 0.6);
-        z-index: 99999;
-      "
     ></view>
 
-    <!-- 导航栏 - 默认85%宽度，可切换显示/隐藏 -->
     <view
       class="sidebar"
-      :class="{ 
-        'mobile-show': showMobileMenu,
-        'mobile-hide': !showMobileMenu && windowWidth <= 768
+      :class="{
+        'sidebar-open': showMobileMenu,
+        'sidebar-closed': !showMobileMenu
       }"
-      style="
-        position: fixed;
-        left: 0; top: 0; bottom: 0;
-        width: 260px;
-        z-index: 100;
-        transition: all 0.3s ease;
-      "
-      :style="
-        windowWidth <= 768 
-          ? (showMobileMenu 
-            ? 'width: 85% !important; max-width: 320px !important; transform: translateX(0) !important;' 
-            : 'transform: translateX(-105%) !important;')
-          : ''
-      "
     >
-      <!-- Logo + 收起按钮 -->
-      <view 
-        style="
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 20px;
-          cursor: pointer;
-        "
-        @tap="toggleMobileMenu"
-      >
-        <!-- CRM系统标题（始终显示状态指示） -->
-        <view style="display: flex; align-items: center; gap: 8px;">
-          <text style="font-size: 28px;">🎯</text>
-          <text style="font-size: 20px; font-weight: 700; color: #FFFFFF;">CRM系统</text>
-          <!-- 状态指示符（所有设备都显示）-->
-          <text style="font-size: 14px; color: rgba(255,255,255,0.7); margin-left: 4px;">
-            {{ showMobileMenu ? '▼' : '☰' }}
-          </text>
-        </view>
+      <view class="sidebar-header">
+        <view class="sidebar-title-row" @click="toggleMobileMenu">
+          <view class="sidebar-left">
+            <text class="sidebar-logo">🎯</text>
+            <text class="sidebar-brand">CRM系统</text>
+            <text class="sidebar-indicator">{{ showMobileMenu ? '▼' : '☰' }}</text>
+          </view>
 
-        <!-- 桌面端折叠按钮（仅大屏） -->
-        <view
-          v-if="windowWidth > 768 && !showMobileMenu"
-          @tap.stop="toggleSidebar"
-          style="
-            width: 28px; height: 28px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          "
-        >
-          <text style="color: #fff; font-size: 16px;">{{ isCollapsed ? '»' : '«' }}</text>
-        </view>
+          <view
+            v-if="!isMobile && !showMobileMenu"
+            class="collapse-btn"
+            @click.stop="toggleSidebar"
+          >
+            <text class="collapse-icon">{{ isCollapsed ? '»' : '«' }}</text>
+          </view>
 
-        <!-- 收起按钮（展开时显示） -->
-        <view
-          v-if="showMobileMenu"
-          @tap.stop="closeMobileMenu"
-          style="
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 14px;
-            background: linear-gradient(135deg, #FF3B30, #FF6B6B);
-            border-radius: 20px;
-            box-shadow: 0 2px 8px rgba(255, 59, 48, 0.4);
-          "
-        >
-          <text style="color: #FFFFFF; font-size: 16px; font-weight: bold;">✕</text>
-          <text style="color: #FFFFFF; font-size: 13px; font-weight: 600;">收起</text>
+          <view
+            class="close-btn"
+            :class="{ 'close-btn-visible': showMobileMenu }"
+            @click.stop="closeMobileMenu"
+          >
+            <text class="close-icon">✕</text>
+            <text class="close-text">收起</text>
+          </view>
         </view>
       </view>
 
-      <!-- 用户信息 -->
-      <view style="padding: 20px; display: flex; align-items: center; gap: 12px;" v-if="!isCollapsed">
-        <view style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center;">
-          <text style="color: #FFFFFF; font-size: 20px; font-weight: 700;">{{ userName.charAt(0) }}</text>
+      <view class="user-info" v-if="!isCollapsed">
+        <view class="user-avatar">
+          <text class="avatar-text">{{ userName.charAt(0) }}</text>
         </view>
-        <view style="flex: 1;">
-          <text style="display: block; font-size: 16px; font-weight: 600; color: #FFFFFF;">{{ userName }}</text>
-          <text style="display: block; font-size: 13px; color: rgba(255,255,255,0.6);">{{ roleLabel }}</text>
+        <view class="user-detail">
+          <text class="user-name">{{ userName }}</text>
+          <text class="user-role">{{ roleLabel }}</text>
         </view>
       </view>
 
-      <!-- 菜单列表 -->
-      <scroll-view scroll-y style="flex: 1; overflow-y: auto;">
-        <view v-if="superAdminItems.length > 0" style="padding: 16px 24px 8px;">
-          <text style="font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">主要功能</text>
+      <scroll-view scroll-y class="menu-scroll">
+        <view class="menu-item" :class="{ 'menu-active': isDashboard }" @click="goDashboard">
+          <view class="menu-icon-wrap" style="background: rgba(102,126,234,0.2);">
+            <text class="menu-icon">🏠</text>
+          </view>
+          <text class="menu-label">工作台</text>
         </view>
-        
+
+        <view v-if="normalMenuItems.length > 0" class="menu-section-title">
+          <text class="section-label">主要功能</text>
+        </view>
+
         <view
           v-for="(item, index) in normalMenuItems"
           :key="'normal-' + index"
-          :class="{ 'nav-active': isActive(item.path), 'nav-highlight': item.highlight }"
-          style="
-            display: flex; align-items: center;
-            padding: 14px 24px; margin: 4px 12px;
-            border-radius: 10px; cursor: pointer;
-          "
-          @tap="navigateTo(item.path)"
+          :class="['menu-item', { 'menu-active': isActive(item.path), 'menu-highlight': item.highlight }]"
+          @click.stop="navigateTo(item.path)"
         >
-          <view style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px; background: rgba(255,255,255,0.1);">
-            <text style="font-size: 18px;">{{ item.icon }}</text>
+          <view class="menu-icon-wrap">
+            <text class="menu-icon">{{ item.icon }}</text>
           </view>
-          <text style="flex: 1; font-size: 15px; color: rgba(255,255,255,0.85);" v-if="!isCollapsed">{{ item.label }}</text>
-          <view v-if="item.highlight" style="position: absolute; top: 6px; right: 8px; background: #FF3B30; color: #FFF; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 8px;">NEW</view>
+          <text class="menu-label" v-if="!isCollapsed">{{ item.label }}</text>
+          <view v-if="item.highlight" class="menu-badge">NEW</view>
         </view>
 
-        <view v-if="superAdminItems.length > 0" style="padding: 16px 24px 8px;">
-          <text style="font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">系统管理</text>
+        <view v-if="superAdminItems.length > 0" class="menu-section-title">
+          <text class="section-label">系统管理</text>
         </view>
-        
+
         <view
           v-for="(item, index) in superAdminItems"
           :key="'admin-' + index"
-          style="
-            display: flex; align-items: center;
-            padding: 14px 24px; margin: 4px 12px;
-            border-radius: 10px; cursor: pointer;
-            background: rgba(102,126,234,0.1);
-            border-left: 3px solid #667eea;
-          "
-          @tap="navigateTo(item.path)"
+          class="menu-item menu-admin-item"
+          @click.stop="navigateTo(item.path)"
         >
-          <view style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px; background: linear-gradient(135deg, #667eea, #764ba2);">
-            <text style="font-size: 18px;">{{ item.icon }}</text>
+          <view class="menu-icon-wrap admin-icon-wrap">
+            <text class="menu-icon">{{ item.icon }}</text>
           </view>
-          <text style="flex: 1; font-size: 15px; color: rgba(255,255,255,0.85);" v-if="!isCollapsed">{{ item.label }}</text>
+          <text class="menu-label" v-if="!isCollapsed">{{ item.label }}</text>
         </view>
       </scroll-view>
 
-      <!-- 底部退出按钮 -->
-      <view style="padding: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <view
-          style="display: flex; align-items: center; padding: 14px 24px; cursor: pointer;"
-          @tap="handleLogout"
-        >
-          <view style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px; background: rgba(255,59,48,0.2);">
-            <text style="font-size: 18px;">🚪</text>
+      <view class="sidebar-footer">
+        <view class="menu-item logout-item" @click.stop="handleLogout">
+          <view class="menu-icon-wrap logout-icon-wrap">
+            <text class="menu-icon">🚪</text>
           </view>
-          <text style="flex: 1; font-size: 15px; color: rgba(255,255,255,0.85);" v-if="!isCollapsed">退出登录</text>
+          <text class="menu-label" v-if="!isCollapsed">退出登录</text>
         </view>
       </view>
     </view>
 
-    <!-- 主内容区 -->
     <view
       class="main-content"
-      :style="{ marginLeft: (windowWidth > 768 && !showMobileMenu) ? (isCollapsed ? '80px' : '260px') : '0' }"
+      :class="{ 'main-shifted': !isMobile && !showMobileMenu && !isCollapsed }"
     >
-      <!-- 顶部栏 -->
-      <view style="background: #FFF; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 100;">
-        <view style="display: flex; align-items: center; gap: 12px;">
-          <view
-            v-if="windowWidth <= 768 || showMobileMenu"
-            @tap="toggleMobileMenu"
-            style="width: 36px; height: 36px; border-radius: 8px; background: #F5F5F5; display: flex; align-items: center; justify-content: center;"
-          >
-            <text style="font-size: 20px; color: #333;">☰</text>
+      <view class="top-bar">
+        <view class="top-bar-left">
+          <view class="menu-toggle-btn" @click="toggleMobileMenu">
+            <text class="toggle-icon">☰</text>
           </view>
-          <text style="font-size: 20px; font-weight: 700; color: #1A1A1A;">{{ title }}</text>
+          <text class="page-title">{{ title }}</text>
         </view>
-        <text style="font-size: 14px; color: #666;">{{ currentDate }}</text>
+        <view class="top-bar-right">
+          <view v-if="syncStatus !== 'idle'" class="sync-indicator" :class="'sync-' + syncStatus">
+            <text class="sync-text">{{ syncStatusText }}</text>
+          </view>
+          <text class="current-date">{{ currentDate }}</text>
+        </view>
       </view>
 
-      <!-- 内容插槽 -->
-      <view style="flex: 1; padding: 24px 32px; overflow-y: auto;">
+      <view class="content-area">
         <slot></slot>
       </view>
     </view>
@@ -194,6 +131,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { checkHeartbeat, incrementalSync } from '@/utils/sync-manager'
 
 const props = defineProps<{
   title?: string
@@ -202,7 +140,15 @@ const props = defineProps<{
 
 const isCollapsed = ref(false)
 const showMobileMenu = ref(false)
-const windowWidth = ref(window.innerWidth)
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
+const syncStatus = ref<'idle' | 'syncing' | 'success' | 'error'>('idle')
+
+const isMobile = computed(() => windowWidth.value <= 768)
+
+const syncStatusText = computed(() => {
+  const map: Record<string, string> = { syncing: '🔄 同步中...', success: '✅ 已同步', error: '⚠️ 同步失败' }
+  return map[syncStatus.value] || ''
+})
 
 const userName = ref('系统管理员')
 const currentUserRole = ref('admin')
@@ -226,7 +172,7 @@ const allMenuItems = [
   { icon: '🧧', label: '红包管理', path: '/pages/admin/red-packet/list', role: 'admin' },
   { icon: '🔔', label: '提醒中心', path: '/pages/admin/remind/index', role: 'admin' },
   { icon: '📊', label: '数据统计', path: '/pages/admin/statistics/index', role: 'admin' },
-  { icon: '📋', label: '日志中心', path: '/pages/admin/audit-log/index', role: 'all' },
+  { icon: '📋', label: '日志中心', path: '/pages/admin/audit-log/list', role: 'all' },
   { icon: '👤', label: '管理员', path: '/pages/admin/admin-user/list', role: 'super_admin' },
   { icon: '⚙️', label: '系统设置', path: '/pages/admin/settings/index', role: 'super_admin' }
 ]
@@ -234,15 +180,19 @@ const allMenuItems = [
 const normalMenuItems = computed(() => menuItems.value.filter(i => i.role !== 'super_admin'))
 const superAdminItems = computed(() => currentUserRole.value === 'super_admin' ? allMenuItems.filter(i => i.role === 'super_admin') : [])
 
+const isDashboard = computed(() => {
+  try {
+    const pages = getCurrentPages()
+    if (!pages?.length) return false
+    const route = pages[pages.length - 1]?.route || ''
+    return route === 'pages/admin/dashboard'
+  } catch { return false }
+})
+
 function toggleSidebar() { isCollapsed.value = !isCollapsed.value }
 
 function toggleMobileMenu() {
-  if (windowWidth.value <= 768) {
-    showMobileMenu.value = !showMobileMenu.value
-  } else {
-    // PC端点击CRM系统也切换菜单
-    showMobileMenu.value = !showMobileMenu.value
-  }
+  showMobileMenu.value = !showMobileMenu.value
 }
 
 function closeMobileMenu() { showMobileMenu.value = false }
@@ -251,17 +201,27 @@ function isActive(path: string): boolean {
   try {
     const pages = getCurrentPages()
     if (!pages?.length) return false
-    return pages[pages.length-1]?.route?.includes(path.replace('/pages/', '').split('/')[0]) || false
+    const currentRoute = pages[pages.length - 1]?.route || ''
+    const targetRoute = path.replace(/^\//, '')
+    return currentRoute === targetRoute
   } catch { return false }
+}
+
+function goDashboard() {
+  closeMobileMenu()
+  if (isDashboard.value) return
+  setTimeout(() => {
+    uni.reLaunch({ url: '/pages/admin/dashboard', fail: () => {} })
+  }, 200)
 }
 
 function navigateTo(path: string) {
   if (!path) { uni.showToast({ title: '开发中...', icon: 'none' }); return }
   if (isActive(path)) { closeMobileMenu(); return }
-  
+
   closeMobileMenu()
   setTimeout(() => {
-    uni.reLaunch({ url, fail: () => uni.showToast({ title: '跳转失败', icon: 'none' }) })
+    uni.reLaunch({ url: path, fail: () => uni.showToast({ title: '跳转失败', icon: 'none' }) })
   }, 200)
 }
 
@@ -274,8 +234,10 @@ function handleLogout() {
     success: (res) => {
       if (res.confirm) {
         uni.removeStorageSync('token')
+        uni.removeStorageSync('refreshToken')
         uni.removeStorageSync('userInfo')
-        uni.reLaunch({ url: '/pages/login/index' })
+        uni.removeStorageSync('tokenExpires')
+        uni.reLaunch({ url: '/pages/admin/login' })
       }
     }
   })
@@ -288,7 +250,7 @@ function checkLogin() {
     if (token && user) {
       isLoggedIn.value = true
       userInfo.value = user
-      userName.value = user.username || user.nickname || '用户'
+      userName.value = user.username || user.nickname || user.name || '用户'
       currentUserRole.value = user.role || 'admin'
     } else {
       isLoggedIn.value = false
@@ -306,13 +268,35 @@ function loadMenuItems() {
 
 function updateWidth() {
   windowWidth.value = window.innerWidth
-  console.log('窗口宽度:', windowWidth.value, windowWidth.value <= 768 ? '移动端' : 'PC端')
+}
+
+async function performSync() {
+  const token = uni.getStorageSync('token') || ''
+  if (token.startsWith('demo-')) {
+    syncStatus.value = 'idle'
+    return
+  }
+
+  syncStatus.value = 'syncing'
+  try {
+    const heartbeat = await checkHeartbeat()
+    if (heartbeat.online) {
+      const result = await incrementalSync()
+      syncStatus.value = result.synced.length > 0 || result.failed.length === 0 ? 'success' : 'error'
+    } else {
+      syncStatus.value = 'error'
+    }
+  } catch {
+    syncStatus.value = 'error'
+  }
+  setTimeout(() => { syncStatus.value = 'idle' }, 3000)
 }
 
 onMounted(() => {
   checkLogin()
   loadMenuItems()
   updateWidth()
+  performSync()
   window.addEventListener('resize', updateWidth)
 })
 
@@ -322,22 +306,437 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.admin-layout { display: flex; min-height: 100vh; background: #F5F6FA; }
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #F5F6FA;
+}
+
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-overlay.overlay-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 .sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 260px;
+  z-index: 9999;
   background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
   display: flex;
   flex-direction: column;
-  box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+  overflow: hidden;
 }
 
-.sidebar.mobile-show { transform: translateX(0); }
-.sidebar.mobile-hide { transform: translateX(-105%); }
+.sidebar-open {
+  transform: translateX(0);
+}
 
-.nav-active { background: linear-gradient(135deg, #667eea, #764ba2); }
-.nav-active text:last-child { color: #fff !important; font-weight: 600; }
-.nav-highlight { background: linear-gradient(135deg, #ff6b6b, #ffe66d); border: 2px solid #FFD700; }
-.nav-highlight text:last-child { color: #1a1a2e !important; font-weight: 700; }
+.sidebar-closed {
+  transform: translateX(-105%);
+}
 
-.main-content { flex: 1; min-height: 100vh; display: flex; flex-direction: column; transition: margin-left 0.3s ease; }
+.sidebar-header {
+  padding: 20px;
+}
+
+.sidebar-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.sidebar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.sidebar-logo {
+  font-size: 28px;
+}
+
+.sidebar-brand {
+  font-size: 20px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.sidebar-indicator {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-left: 4px;
+}
+
+.collapse-btn {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collapse-icon {
+  color: #fff;
+  font-size: 16px;
+}
+
+.close-btn {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #FF3B30, #FF6B6B);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.4);
+  transition: visibility 0s 0.3s, opacity 0.3s ease;
+}
+
+.close-btn-visible {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.3s ease;
+}
+
+.close-icon {
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.close-text {
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.user-info {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-text {
+  color: #FFFFFF;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.user-detail {
+  flex: 1;
+}
+
+.user-name {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.user-role {
+  display: block;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.menu-scroll {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.menu-section-title {
+  padding: 16px 24px 8px;
+}
+
+.section-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 24px;
+  margin: 4px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  position: relative;
+}
+
+.menu-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.menu-icon {
+  font-size: 18px;
+}
+
+.menu-label {
+  flex: 1;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.menu-badge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: #FF3B30;
+  color: #FFF;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.menu-active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.menu-active .menu-label {
+  color: #fff;
+  font-weight: 600;
+}
+
+.menu-highlight {
+  background: linear-gradient(135deg, #ff6b6b, #ffe66d);
+  border: 2px solid #FFD700;
+}
+
+.menu-highlight .menu-label {
+  color: #1a1a2e;
+  font-weight: 700;
+}
+
+.menu-admin-item {
+  background: rgba(102, 126, 234, 0.1);
+  border-left: 3px solid #667eea;
+}
+
+.admin-icon-wrap {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-item {
+  background: transparent;
+}
+
+.logout-icon-wrap {
+  background: rgba(255, 59, 48, 0.2);
+}
+
+.main-content {
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.3s ease;
+  margin-left: 0;
+}
+
+.main-shifted {
+  margin-left: 260px;
+}
+
+.top-bar {
+  background: #FFF;
+  padding: 16px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.menu-toggle-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #F5F5F5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.toggle-icon {
+  font-size: 20px;
+  color: #333;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sync-indicator {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.sync-syncing {
+  background: #E3F2FD;
+}
+
+.sync-success {
+  background: #E8F5E9;
+}
+
+.sync-error {
+  background: #FFEBEE;
+}
+
+.sync-text {
+  font-size: 12px;
+  color: #333;
+}
+
+.current-date {
+  font-size: 14px;
+  color: #666;
+}
+
+.content-area {
+  flex: 1;
+  padding: 24px 32px;
+  overflow-y: auto;
+}
+
+@media (min-width: 769px) {
+  .sidebar-closed {
+    transform: translateX(0);
+  }
+
+  .mobile-overlay.overlay-visible {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .menu-toggle-btn {
+    display: none;
+  }
+
+  .close-btn {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .sidebar-open {
+    transform: translateX(0) !important;
+  }
+
+  .sidebar-closed {
+    transform: translateX(-105%) !important;
+  }
+
+  .sidebar-open .close-btn-visible {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+  }
+
+  .main-shifted {
+    margin-left: 0 !important;
+  }
+
+  .top-bar {
+    padding: 12px 16px;
+  }
+
+  .content-area {
+    padding: 16px;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .menu-toggle-btn {
+    display: flex;
+  }
+}
 </style>

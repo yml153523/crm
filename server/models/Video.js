@@ -46,5 +46,8 @@ const videoSchema = new mongoose.Schema({
 
 videoSchema.index({ categoryPath: 1, status: 1, createdAt: -1 })
 videoSchema.index({ productId: 1, isMarketing: 1 })
+videoSchema.index({ courseId: 1, status: 1 }) // 课程视频查询优化
+videoSchema.index({ uploadedBy: 1, createdAt: -1 }) // 用户视频列表优化
+videoSchema.index({ status: 1, isRecommended: -1, createdAt: -1 }) // 推荐列表优化
 
 module.exports = mongoose.model('Video', videoSchema)

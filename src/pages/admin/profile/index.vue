@@ -39,7 +39,7 @@
         <text class="section-title">📝 个人设置</text>
       </view>
 
-      <view class="setting-item" @tap="showEditName">
+      <view class="setting-item" @click="showEditName">
         <view class="item-left">
           <text class="item-icon">👤</text>
           <text class="item-label">修改姓名</text>
@@ -50,7 +50,7 @@
         </view>
       </view>
 
-      <view class="setting-item" @tap="showChangePasswordHint">
+      <view class="setting-item" @click="showChangePasswordHint">
         <view class="item-left">
           <text class="item-icon">🔒</text>
           <text class="item-label">修改密码</text>
@@ -114,7 +114,7 @@
 
     <!-- 退出登录 -->
     <view class="section card danger-zone">
-      <view class="setting-item danger" @tap="handleLogout">
+      <view class="setting-item danger" @click="handleLogout">
         <view class="item-left">
           <text class="item-icon">🚪</text>
           <text class="item-label">退出登录</text>
@@ -129,6 +129,7 @@
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from '@/components/AdminLayout.vue'
 import { apiPost } from '@/utils/request'
@@ -175,7 +176,7 @@ function showEditName() {
 
           userInfo.value.name = res.content
           uni.setStorageSync('userInfo', { ...userInfo.value, name: res.content })
-          uni.showToast({ title: '修改成功', icon: 'success' })
+          uni.showToast({ title: MESSAGES.COMMON.SAVE_SUCCESS, icon: TOAST_ICON.SUCCESS })
         } catch (error) {
           console.error('修改姓名失败:', error)
           uni.showToast({ title: '修改失败', icon: 'none' })

@@ -4,7 +4,7 @@
     <view class="not-logged-in" v-if="notLoggedIn">
       <text class="nli-icon">🔒</text>
       <text class="nli-text">请先登录后查看购物车</text>
-      <view class="nli-btn" @tap="goLogin">
+      <view class="nli-btn" @click="goLogin">
         <text class="nli-btn-text">去登录</text>
       </view>
     </view>
@@ -43,14 +43,14 @@
               </view>
 
               <view class="quantity-control">
-                <button class="qty-btn" @tap="updateQuantity(item._id, item.quantity - 1)">-</button>
+                <button class="qty-btn" @click="updateQuantity(item._id, item.quantity - 1)">-</button>
                 <text class="qty-value">{{ item.quantity }}</text>
-                <button class="qty-btn" @tap="updateQuantity(item._id, item.quantity + 1)">+</button>
+                <button class="qty-btn" @click="updateQuantity(item._id, item.quantity + 1)">+</button>
               </view>
             </view>
           </view>
 
-          <button class="delete-btn" @tap="removeItem(item._id)">🗑️</button>
+          <button class="delete-btn" @click="removeItem(item._id)">🗑️</button>
         </view>
       </view>
 
@@ -66,11 +66,11 @@
         </view>
       </view>
 
-      <button class="checkout-btn" @tap="goToCheckout">
+      <button class="checkout-btn" @click="goToCheckout">
         去结算 ({{ cartData.itemCount }}件)
       </button>
 
-      <button class="clear-btn" @tap="clearCart">
+      <button class="clear-btn" @click="clearCart">
         清空购物车
       </button>
     </view>
@@ -78,13 +78,14 @@
     <view v-else class="empty-state">
       <text class="empty-icon">🛒</text>
       <text class="empty-text">购物车是空的</text>
-      <button class="shop-btn" @tap="goShopping">去逛逛</button>
+      <button class="shop-btn" @click="goShopping">去逛逛</button>
     </view>
     </template>
   </view>
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, onMounted } from 'vue'
 import { requireLogin } from '@/utils/auth'
 
@@ -141,7 +142,7 @@ async function updateQuantity(itemId: string, newQty: number) {
 
 async function removeItem(itemId: string) {
   uni.showModal({
-    title: '确认删除',
+    title: MESSAGES.COMMON.CONFIRM_DELETE,
     content: '确定要删除该商品吗？',
     success: async (res) => {
       if (res.confirm) {

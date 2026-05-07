@@ -69,6 +69,7 @@ const orderSchema = new mongoose.Schema({
 orderSchema.index({ userId: 1, createdAt: -1 })
 orderSchema.index({ orderNo: 1 }, { unique: true })
 orderSchema.index({ status: 1, createdAt: -1 })
+orderSchema.index({ paymentStatus: 1, paidAt: -1 }) // 支付状态查询优化
 
 orderSchema.pre('save', function(next) {
   if (!this.orderNo) {

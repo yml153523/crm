@@ -43,29 +43,43 @@ router.post('/', async (req, res) => {
     const { productId, quantity = 1, variantName } = req.body
     const userId = req.user?.id
     
+    if (!productId) {
+      return res.status(400).json({ success: false, message: '商品ID不能为空' })
+    }
+    
+    const qty = parseInt(quantity)
+    if (isNaN(qty) || qty < 1) {
+      return res.status(400).json({ success: false, message: '数量必须为正整数' })
+    }
+    if (qty > 999) {
+      return res.status(400).json({ success: false, message: '单次添加数量不能超过999' })
+    }
+
     const product = await Product.findOne({ _id: productId, status: 'active' })
     if (!product) return res.status(400).json({ success: false, message: '商品不存在或已下架' })
-    if (product.stock < quantity) return res.status(400).json({ success: false, message: '库存不足' })
+    if (product.stock < qty) return res.status(400).json({ success: false, message: '库存不足' })
     
     const existingItem = await Cart.findOne({ userId, productId })
     
     let cartItem
     if (existingItem) {
-      existingItem.quantity += parseInt(quantity)
+      existingItem.quantity += qty
       cartItem = await existingItem.save()
     } else {
       cartItem = await Cart.create({
         userId,
         productId,
-        quantity: parseInt(quantity),
-        variantName: variantName || '',
+        quantity: qty,
+        variantName: (variantName || '').trim(),
         price: product.price
       })
     }
     
+    console.log(`[Cart] 添加商品: userId=${userId} productId=${productId} qty=${qty}`)
     res.json({ success: true, message: '已添加到购物车', data: { cartItem } })
   } catch (error) {
-    res.status(500).json({ success: false, message: '添加到购物车失败' })
+    console.error('添加到购物车错误:', error)
+    res.status(500).json({ success: false, message: '添加到购物车失败: ' + error.message })
   }
 })
 

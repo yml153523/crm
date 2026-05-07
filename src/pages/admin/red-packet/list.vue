@@ -5,31 +5,31 @@
       <view class="stats-grid">
         <view class="stat-card">
           <text class="stat-value">{{ totalPackets }}</text>
-          <text class="stat-label">红包总数</text>
+          <text class="stat-label">{{ MESSAGES.ADMIN.TOTAL_REDPACKETS }}</text>
         </view>
         <view class="stat-card">
           <text class="stat-value">¥{{ totalAmount }}</text>
-          <text class="stat-label">总金额</text>
+          <text class="stat-label">{{ MESSAGES.ADMIN.TOTAL_AMOUNT }}</text>
         </view>
         <view class="stat-card">
           <text class="stat-value">{{ sentCount }}</text>
-          <text class="stat-label">已发送</text>
+          <text class="stat-label">{{ MESSAGES.ADMIN.SENT }}</text>
         </view>
         <view class="stat-card">
           <text class="stat-value">{{ receivedCount }}</text>
-          <text class="stat-label">已领取</text>
+          <text class="stat-label">{{ MESSAGES.ADMIN.RECEIVED }}</text>
         </view>
       </view>
 
       <!-- 操作栏 -->
       <view class="toolbar">
-        <button class="btn-primary" @tap="showCreateModal = true">
-          ＋ 发放新红包
+        <button class="btn-primary" @click="showCreateModal = true">
+          ＋ {{ MESSAGES.ADMIN.ISSUE_REDPACKET }}
         </button>
         <input
           type="text"
           v-model="searchText"
-          placeholder="搜索红包..."
+          :placeholder="MESSAGES.ADMIN.SEARCH_REDPACKETS"
           class="search-input"
         />
       </view>
@@ -52,96 +52,96 @@
 
           <view class="packet-body">
             <text class="packet-amount">¥{{ packet.amount }}</text>
-            <text class="packet-info">
-              总额: ¥{{ packet.totalAmount }} | 数量: {{ packet.count }}个
-            </text>
-            <text class="packet-time">创建时间: {{ packet.createdAt }}</text>
+          <text class="packet-info">
+            总额: ¥{{ packet.totalAmount }} | 数量: {{ packet.count }}个
+          </text>
+          <text class="packet-time">创建时间: {{ formatTime(packet.createdAt) }}</text>
           </view>
 
           <view class="packet-actions">
             <button
               class="btn-small btn-detail"
-              @tap="viewDetail(packet)"
+              @click="viewDetail(packet)"
             >
-              详情
+              {{ MESSAGES.ADMIN.DETAIL }}
             </button>
             <button
               v-if="packet.status === 'active'"
               class="btn-small btn-disable"
-              @tap="disablePacket(packet._id)"
+              @click="disablePacket(packet._id)"
             >
-              停用
+              {{ MESSAGES.ADMIN.DEACTIVATE }}
             </button>
           </view>
         </view>
 
         <view class="empty-state" v-if="filteredPackets.length === 0 && !loading">
-          <text class="empty-icon">🧧</text>
-          <text class="empty-text">暂无红包记录</text>
-          <text class="empty-hint">点击上方按钮发放新红包</text>
-        </view>
+        <text class="empty-icon">🧧</text>
+        <text class="empty-text">{{ MESSAGES.ADMIN.NO_REDPACKET }}</text>
+        <text class="empty-hint">{{ MESSAGES.ADMIN.REDPACKET_HINT }}</text>
+      </view>
       </view>
 
       <!-- 创建红包弹窗 -->
-      <view class="modal-overlay" v-if="showCreateModal" @tap="showCreateModal = false">
-        <view class="modal-content" @tap.stop>
-          <text class="modal-title">发放新红包</text>
+      <view class="modal-overlay" v-if="showCreateModal" @click="showCreateModal = false">
+        <view class="modal-content" @click.stop>
+          <text class="modal-title">{{ MESSAGES.ADMIN.ISSUE_REDPACKET }}</text>
 
           <view class="form-group">
-            <text class="form-label">红包类型</text>
-            <view class="type-selector">
-              <view
-                class="type-option"
-                :class="{ active: newPacket.type === 'random' }"
-                @tap="newPacket.type = 'random'"
-              >
-                <text>🎲 拼手气</text>
-              </view>
-              <view
-                class="type-option"
-                :class="{ active: newPacket.type === 'average' }"
-                @tap="newPacket.type = 'average'"
-              >
-                <text>💰 普通红包</text>
+              <text class="form-label">{{ MESSAGES.ADMIN.REDPACKET_TYPE }}</text>
+              <view class="type-selector">
+                <view
+                  class="type-option"
+                  :class="{ active: newPacket.type === 'random' }"
+                  @click="newPacket.type = 'random'"
+                >
+                  <text>{{ MESSAGES.ADMIN.LUCKY_DRAW }}</text>
+                </view>
+                <view
+                  class="type-option"
+                  :class="{ active: newPacket.type === 'average' }"
+                  @click="newPacket.type = 'average'"
+                >
+                  <text>{{ MESSAGES.ADMIN.NORMAL_REDPACKET }}</text>
+                </view>
               </view>
             </view>
-          </view>
 
-          <view class="form-group">
-            <text class="form-label">总金额 (元)</text>
-            <input
-              type="digit"
-              v-model="newPacket.totalAmount"
-              placeholder="请输入金额"
-              class="form-input"
-            />
-          </view>
+            <view class="form-group">
+              <text class="form-label">{{ MESSAGES.ADMIN.TOTAL_AMOUNT_YUAN }}</text>
+              <input
+                type="digit"
+                v-model="newPacket.totalAmount"
+                :placeholder="MESSAGES.ADMIN.ENTER_AMOUNT"
+                class="form-input"
+              />
+            </view>
 
-          <view class="form-group">
-            <text class="form-label">红包个数</text>
-            <input
-              type="number"
-              v-model="newPacket.count"
-              placeholder="请输入数量"
-              class="form-input"
-            />
-          </view>
+            <view class="form-group">
+              <text class="form-label">{{ MESSAGES.ADMIN.REDPACKET_COUNT }}</text>
+              <input
+                type="number"
+                v-model="newPacket.count"
+                :placeholder="MESSAGES.ADMIN.ENTER_COUNT"
+                class="form-input"
+              />
+            </view>
 
-          <view class="form-group">
-            <text class="form-label">备注</text>
-            <textarea
-              v-model="newPacket.remark"
-              placeholder="可选：添加备注信息"
-              class="form-textarea"
-            />
-          </view>
+            <view class="form-group">
+              <text class="form-label">{{ MESSAGES.ADMIN.REMARK }}</text>
+              <textarea
+                v-model="newPacket.remark"
+                :placeholder="MESSAGES.ADMIN.REMARK_OPTIONAL"
+                class="form-textarea"
+              />
+            </view>
 
-          <view class="modal-actions">
-            <button class="btn-cancel" @tap="showCreateModal = false">取消</button>
-            <button class="btn-confirm" @tap="createPacket" :disabled="creating">
-              {{ creating ? '创建中...' : '确认发放' }}
-            </button>
-          </view>
+            <view class="modal-actions">
+              <button class="btn-cancel" @click="showCreateModal = false">{{ MESSAGES.COMMON.CANCEL }}</button>
+              <button class="btn-confirm" @click="createPacket" :disabled="creating">
+                {{ creating ? MESSAGES.ADMIN.CREATING : MESSAGES.ADMIN.CONFIRM_SEND }}
+              </button>
+            </view>
         </view>
       </view>
     </view>
@@ -151,11 +151,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from '@/components/AdminLayout.vue'
+import { MESSAGES, TOAST_ICON, API_PATHS, UI_COLORS } from '@/config/constants'
+import { apiGet, apiPost, apiPut } from '@/utils/request'
 
 const loading = ref(false)
 const creating = ref(false)
 const showCreateModal = ref(false)
 const searchText = ref('')
+const page = ref(1)
+const hasMore = ref(true)
+const total = ref(0)
 
 // 统计数据
 const totalPackets = ref(0)
@@ -185,7 +190,13 @@ const filteredPackets = computed(() => {
   )
 })
 
+// 🔧 P0 FIX: 每次进入页面时重置分页状态，防止数据重复累积
 onMounted(() => {
+  console.log('[RedPacketList] onMounted - 重置分页状态')
+  page.value = 1
+  packetList.value = []
+  hasMore.value = true
+  total.value = 0
   loadRedPackets()
   loadStatistics()
 })
@@ -249,7 +260,7 @@ async function loadStatistics() {
 }
 
 function getTypeLabel(type: string) {
-  return type === 'random' ? '🎲 拼手气' : '💰 普通红包'
+  return type === 'random' ? MESSAGES.ADMIN.LUCKY_DRAW : MESSAGES.ADMIN.NORMAL_REDPACKET
 }
 
 function getStatusLabel(status: string) {
@@ -264,7 +275,7 @@ function getStatusLabel(status: string) {
 
 function viewDetail(packet: any) {
   uni.showModal({
-    title: '红包详情',
+    title: MESSAGES.ADMIN.DETAIL,
     content: `类型: ${getTypeLabel(packet.type)}\n金额: ¥${packet.totalAmount}\n数量: ${packet.count}个\n状态: ${getStatusLabel(packet.status)}\n备注: ${packet.remark || '无'}`,
     showCancel: false
   })
@@ -272,11 +283,11 @@ function viewDetail(packet: any) {
 
 async function disablePacket(id: string) {
   uni.showModal({
-    title: '确认停用',
+    title: MESSAGES.COMMON.CONFIRM_DELETE,
     content: '确定要停用此红包吗？',
     success: async (res) => {
       if (res.confirm) {
-        uni.showToast({ title: '已停用', icon: 'success' })
+        uni.showToast({ title: MESSAGES.ADMIN.DEACTIVATE + '成功', icon: TOAST_ICON.SUCCESS })
         loadRedPackets()
       }
     }
@@ -284,8 +295,10 @@ async function disablePacket(id: string) {
 }
 
 async function createPacket() {
+  if (creating.value) return
+
   if (!newPacket.value.totalAmount || !newPacket.value.count) {
-    uni.showToast({ title: '请填写完整信息', icon: 'none' })
+    uni.showToast({ title: '请填写完整信息', icon: TOAST_ICON.NONE })
     return
   }
 
@@ -293,12 +306,12 @@ async function createPacket() {
   const count = parseInt(newPacket.value.count)
 
   if (amount <= 0 || count <= 0) {
-    uni.showToast({ title: '金额和数量必须大于0', icon: 'none' })
+    uni.showToast({ title: '金额和数量必须大于0', icon: TOAST_ICON.NONE })
     return
   }
 
   if (amount / count < 0.01) {
-    uni.showToast({ title: '单个红包最少0.01元', icon: 'none' })
+    uni.showToast({ title: '单个红包最少0.01元', icon: TOAST_ICON.NONE })
     return
   }
 
@@ -308,16 +321,10 @@ async function createPacket() {
     const token = uni.getStorageSync('token') || ''
 
     if (token.startsWith('demo-')) {
-      // 演示模式模拟成功
       setTimeout(() => {
-        uni.showToast({ title: '✅ 红包发放成功！', icon: 'success' })
+        uni.showToast({ title: '✅ ' + MESSAGES.ADMIN.CONFIRM_SEND + '！', icon: TOAST_ICON.SUCCESS })
         showCreateModal.value = false
-        newPacket.value = {
-          type: 'random',
-          totalAmount: '',
-          count: '',
-          remark: ''
-        }
+        newPacket.value = { type: 'random', totalAmount: '', count: '', remark: '' }
         loadRedPackets()
         loadStatistics()
         creating.value = false
@@ -325,12 +332,11 @@ async function createPacket() {
       return
     }
 
-    // 真实API调用
     console.log('[红包管理] 创建API待实现')
     creating.value = false
   } catch (error) {
     console.error('[红包管理] 创建失败:', error)
-    uni.showToast({ title: '创建失败', icon: 'none' })
+    uni.showToast({ title: MESSAGES.COMMON.ADD_FAILED, icon: TOAST_ICON.NONE })
     creating.value = false
   }
 }

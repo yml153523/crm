@@ -18,7 +18,7 @@
       <view 
         class="tab-item" 
         :class="{ active: currentCategory === '' }"
-        @tap="selectCategory('')"
+        @click="selectCategory('')"
       >
         <text>全部</text>
       </view>
@@ -27,7 +27,7 @@
         :class="{ active: currentCategory === item }"
         v-for="item in categories" 
         :key="item"
-        @tap="selectCategory(item)"
+        @click="selectCategory(item)"
       >
         <text>{{ getCategoryName(item) }}</text>
       </view>
@@ -37,21 +37,21 @@
       <view 
         class="sort-item" 
         :class="{ active: sortBy === 'sales' }"
-        @tap="changeSort('sales')"
+        @click="changeSort('sales')"
       >
         <text>销量</text>
       </view>
       <view 
         class="sort-item" 
         :class="{ active: sortBy === 'price' }"
-        @tap="changeSort('price')"
+        @click="changeSort('price')"
       >
         <text>价格</text>
       </view>
       <view 
         class="sort-item" 
         :class="{ active: sortBy === 'new' }"
-        @tap="changeSort('new')"
+        @click="changeSort('new')"
       >
         <text>最新</text>
       </view>
@@ -62,7 +62,7 @@
         class="product-card" 
         v-for="product in products" 
         :key="product._id"
-        @tap="goToDetail(product._id)"
+        @click="goToDetail(product._id)"
       >
         <image 
           :src="product.coverImage || '/static/placeholder.png'" 

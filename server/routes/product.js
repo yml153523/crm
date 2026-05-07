@@ -106,14 +106,23 @@ router.post('/', upload.array('images', 5), async (req, res) => {
   try {
     const { name, description, category, price, originalPrice, stock, tags } = req.body
     
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: '商品名称不能为空' })
+    }
+    
+    const numPrice = parseFloat(price)
+    if (isNaN(numPrice) || numPrice < 0) {
+      return res.status(400).json({ success: false, message: '价格必须为非负数' })
+    }
+    
     const images = req.files ? req.files.map(f => `/uploads/products/${f.filename}`) : []
     const coverImage = images[0] || ''
     
     const product = await Product.create({
-      name,
+      name: name.trim(),
       description: description || '',
       category: category || 'other',
-      price: parseFloat(price),
+      price: numPrice,
       originalPrice: parseFloat(originalPrice) || 0,
       stock: parseInt(stock) || 0,
       coverImage,

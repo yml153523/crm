@@ -1,3 +1,6 @@
+import { getToken, getRefreshToken, setTokens, setUserInfo, clearAuth, isTokenExpired } from './storage'
+import { refreshTokenSilently, ensureValidToken } from './sync-manager'
+
 export interface LoginCheckResult {
   isLoggedIn: boolean
   token: string
@@ -7,11 +10,10 @@ export interface LoginCheckResult {
 
 export function checkLogin(): LoginCheckResult {
   try {
-    const token = uni.getStorageSync('token') || ''
+    const token = getToken()
     const userInfo = uni.getStorageSync('userInfo') || null
     const isLoggedIn = !!token
     const isDemoMode = typeof token === 'string' && token.startsWith('demo-')
-
     return { isLoggedIn, token, userInfo, isDemoMode }
   } catch {
     return { isLoggedIn: false, token: '', userInfo: null, isDemoMode: false }
@@ -52,3 +54,5 @@ export function getBalance(): string {
   }
   return '0.00'
 }
+
+export { getToken, getRefreshToken, setTokens, setUserInfo, clearAuth, isTokenExpired, ensureValidToken, refreshTokenSilently }

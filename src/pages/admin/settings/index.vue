@@ -6,7 +6,7 @@
       <view class="section-header">
         <text class="section-title">👤 个人信息</text>
       </view>
-      <view class="setting-item" @tap="showEditProfile">
+      <view class="setting-item" @click="showEditProfile">
         <view class="item-left">
           <text class="item-icon">📝</text>
           <text class="item-label">修改昵称/姓名</text>
@@ -17,7 +17,7 @@
         </view>
       </view>
 
-      <view class="setting-item" @tap="showChangePassword">
+      <view class="setting-item" @click="showChangePassword">
         <view class="item-left">
           <text class="item-icon">🔒</text>
           <text class="item-label">修改密码</text>
@@ -34,7 +34,7 @@
       <view class="section-header">
         <text class="section-title">⚙️ 系统配置</text>
       </view>
-      <view class="setting-item" @tap="goToAdminManagement">
+      <view class="setting-item" @click="goToAdminManagement">
         <view class="item-left">
           <text class="item-icon">👥</text>
           <text class="item-label">管理员管理</text>
@@ -45,7 +45,7 @@
         </view>
       </view>
 
-      <view class="setting-item" @tap="goToLogSettings">
+      <view class="setting-item" @click="goToLogSettings">
         <view class="item-left">
           <text class="item-icon">📋</text>
           <text class="item-label">日志配置</text>
@@ -107,7 +107,7 @@
 
     <!-- 危险操作区域 -->
     <view class="section card danger-zone">
-      <view class="setting-item danger" @tap="handleLogout">
+      <view class="setting-item danger" @click="handleLogout">
         <view class="item-left">
           <text class="item-icon">🚪</text>
           <text class="item-label">退出登录</text>
@@ -117,7 +117,7 @@
         </view>
       </view>
 
-      <view class="setting-item danger" v-if="isSuperAdmin" @tap="clearCache">
+      <view class="setting-item danger" v-if="isSuperAdmin" @click="clearCache">
         <view class="item-left">
           <text class="item-icon">🗑️</text>
           <text class="item-label">清除缓存</text>
@@ -133,6 +133,7 @@
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from '@/components/AdminLayout.vue'
 import { apiPost } from '@/utils/request'
@@ -176,7 +177,7 @@ function showEditProfile() {
 
           userInfo.value.name = res.content
           uni.setStorageSync('userInfo', { ...userInfo.value, name: res.content })
-          uni.showToast({ title: '修改成功', icon: 'success' })
+          uni.showToast({ title: MESSAGES.COMMON.SAVE_SUCCESS, icon: TOAST_ICON.SUCCESS })
         } catch (error) {
           console.error('修改个人信息失败:', error)
           uni.showToast({ title: '修改失败', icon: 'none' })
@@ -248,7 +249,7 @@ function clearCache() {
       if (res.confirm) {
         try {
           uni.clearStorageSync()
-          uni.showToast({ title: '缓存已清除', icon: 'success' })
+          uni.showToast({ title: '缓存已清除', icon: TOAST_ICON.SUCCESS })
 
           setTimeout(() => {
             uni.reLaunch({ url: '/pages/admin/login' })

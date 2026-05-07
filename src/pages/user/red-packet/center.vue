@@ -4,7 +4,7 @@
     <view class="not-logged-in" v-if="notLoggedIn">
       <text class="nli-icon">🔒</text>
       <text class="nli-text">请先登录后查看红包</text>
-      <view class="nli-btn" @tap="goLogin">
+      <view class="nli-btn" @click="goLogin">
         <text class="nli-btn-text">去登录</text>
       </view>
     </view>
@@ -12,27 +12,50 @@
     <template v-else>
     <view class="header">
       <text class="page-title">🧧 我的红包</text>
+      <view class="notify-badge" v-if="unreadReminds > 0" @click="toggleNotifies">
+        <text class="nb-icon">🔔</text>
+        <text class="nb-count">{{ unreadReminds }}</text>
+      </view>
+    </view>
+
+    <view v-if="showNotifies && reminds.length > 0" class="notify-list">
+      <view
+        class="notify-item"
+        v-for="item in reminds"
+        :key="item._id"
+        :class="{ 'notify-unread': !item.read }"
+        @click="markRead(item)"
+      >
+        <view class="ni-left">
+          <text class="ni-icon">{{ item.type === 'redPacket' ? '🧧' : '📢' }}</text>
+        </view>
+        <view class="ni-content">
+          <text class="ni-title">{{ item.title }}</text>
+          <text class="ni-desc">{{ item.content }}</text>
+        </view>
+        <text class="ni-time">{{ formatNotifyTime(item.sentAt) }}</text>
+      </view>
     </view>
 
     <view class="tab-bar">
       <view 
         class="tab-item" 
         :class="{ active: currentTab === 'available' }"
-        @tap="switchTab('available')"
+        @click="switchTab('available')"
       >
         <text>可用 ({{ available.length }})</text>
       </view>
       <view 
         class="tab-item" 
         :class="{ active: currentTab === 'used' }"
-        @tap="switchTab('used')"
+        @click="switchTab('used')"
       >
         <text>已用</text>
       </view>
       <view 
         class="tab-item" 
         :class="{ active: currentTab === 'expired' }"
-        @tap="switchTab('expired')"
+        @click="switchTab('expired')"
       >
         <text>已过期</text>
       </view>
@@ -56,13 +79,13 @@
             <text class="rp-expire-info">有效期至: {{ formatTime(rp.expiresAt) }}</text>
           </view>
 
-          <button class="use-btn" @tap="useRedPacket(rp)">立即使用</button>
+          <button class="use-btn" @click="useRedPacket(rp)">立即使用</button>
         </view>
 
         <view class="empty-state" v-if="available.length === 0">
           <text class="empty-icon">🧧</text>
           <text class="empty-text">暂无可用红包</text>
-          <button class="get-rp-btn" @tap="goToClaim">去领取红包</button>
+          <button class="get-rp-btn" @click="goToClaim">去领取红包</button>
         </view>
       </view>
 
@@ -114,7 +137,7 @@
     </scroll-view>
 
     <view v-else class="loading-container">
-      <text>加载中...</text>
+      <text>{{ MESSAGES.COMMON.LOADING }}</text>
     </view>
     </template>
   </view>
@@ -123,6 +146,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { requireLogin } from '@/utils/auth'
+import { MESSAGES } from '@/config/constants'
 
 const loading = ref(true)
 const currentTab = ref('available')
@@ -130,6 +154,9 @@ const available = ref<any[]>([])
 const used = ref<any[]>([])
 const expired = ref<any[]>([])
 const notLoggedIn = ref(false)
+const reminds = ref<any[]>([])
+const unreadReminds = ref(0)
+const showNotifies = ref(false)
 
 onMounted(() => {
   if (!requireLogin()) {
@@ -137,7 +164,54 @@ onMounted(() => {
     return
   }
   loadRedPackets()
+  loadReminds()
 })
+
+async function loadReminds() {
+  try {
+    const token = uni.getStorageSync('token') || ''
+    if (!token || token.startsWith('demo-')) return
+
+    const res = await uni.request({
+      url: '/api/remind/my-reminds',
+      header: { Authorization: `Bearer ${token}` }
+    })
+
+    if ((res.data as any)?.success) {
+      const data = (res.data as any).data
+      reminds.value = data.list || []
+      unreadReminds.value = data.unreadCount || 0
+    }
+  } catch {}
+}
+
+function toggleNotifies() { showNotifies.value = !showNotifies.value }
+
+async function markRead(item: any) {
+  try {
+    const token = uni.getStorageSync('token') || ''
+    await uni.request({
+      url: `/api/remind/my-reminds/${item._id}/read`,
+      method: 'POST',
+      header: { Authorization: `Bearer ${token}` }
+    })
+    item.read = true
+    unreadReminds.value = Math.max(0, unreadReminds.value - 1)
+  } catch {}
+}
+
+function formatNotifyTime(timeStr?: string): string {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return '刚刚'
+  if (mins < 60) return `${mins}分钟前`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}小时前`
+  return `${date.getMonth()+1}/${date.getDate()}`
+}
 
 async function loadRedPackets() {
   loading.value = true
@@ -440,5 +514,89 @@ function goLogin() {
       border: none;
     }
   }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notify-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #FF3B30;
+  border-radius: 16px;
+}
+.nb-icon { font-size: 16px; }
+.nb-count {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.notify-list {
+  margin: 0 16px 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.notify-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  gap: 10px;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child { border-bottom: none; }
+}
+
+.notify-unread { background: #FFF8F0; }
+
+.ni-left {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF6B6B, #FFD93D);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ni-icon { font-size: 18px; }
+
+.ni-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ni-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ni-desc {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ni-time {
+  font-size: 11px;
+  color: #bbb;
+  flex-shrink: 0;
 }
 </style>

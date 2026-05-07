@@ -23,6 +23,41 @@ const validate = (req, res, next) => {
   next();
 };
 
+router.get('/', async (req, res) => {
+  try {
+    const { page = 1, pageSize = 10, status } = req.query;
+    const query = {};
+    if (status) query.status = status;
+
+    const skip = (parseInt(page) - 1) * parseInt(pageSize);
+    const [list, total] = await Promise.all([
+      RedPacket.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(pageSize))
+        .lean(),
+      RedPacket.countDocuments(query)
+    ]);
+
+    res.json({
+      code: 200,
+      success: true,
+      data: {
+        list,
+        pagination: {
+          page: parseInt(page),
+          pageSize: parseInt(pageSize),
+          total,
+          totalPages: Math.ceil(total / parseInt(pageSize))
+        }
+      }
+    });
+  } catch (error) {
+    console.error('获取红包列表失败:', error);
+    res.status(500).json({ code: 500, success: false, message: '获取红包列表失败: ' + error.message });
+  }
+});
+
 router.post('/', [
     body('title').trim().notEmpty().withMessage('红包名称不能为空'),
     body('type').isIn(['fixed', 'random']).withMessage('红包类型无效'),

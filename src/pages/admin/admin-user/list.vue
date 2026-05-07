@@ -6,17 +6,17 @@
         <view 
           class="filter-tab" 
           :class="{ active: currentFilter === 'all' }" 
-          @tap="currentFilter = 'all'"
+          @click="currentFilter = 'all'"
         >全部</view>
         <view 
           class="filter-tab" 
           :class="{ active: currentFilter === 'active' }" 
-          @tap="currentFilter = 'active'"
+          @click="currentFilter = 'active'"
         >启用中</view>
         <view 
           class="filter-tab" 
           :class="{ active: currentFilter === 'disabled' }" 
-          @tap="currentFilter = 'disabled'"
+          @click="currentFilter = 'disabled'"
         >已禁用</view>
       </view>
     </view>
@@ -195,6 +195,7 @@
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from '@/components/AdminLayout.vue'
 import adminUserApi from '@/services/adminUserApi'
@@ -354,7 +355,7 @@ async function submitForm() {
         role: formData.value.role,
         note: formData.value.note
       })
-      uni.showToast({ title: '更新成功', icon: 'success' })
+      uni.showToast({ title: '更新成功', icon: TOAST_ICON.SUCCESS })
     } else {
       await adminUserApi.createAdminUser({
         phone: formData.value.phone,
@@ -363,7 +364,7 @@ async function submitForm() {
         role: formData.value.role,
         note: formData.value.note
       })
-      uni.showToast({ title: '创建成功', icon: 'success' })
+      uni.showToast({ title: MESSAGES.COMMON.CREATE_SUCCESS, icon: TOAST_ICON.SUCCESS })
     }
 
     closeModal()
@@ -388,7 +389,7 @@ async function toggleStatus(user: any) {
       if (res.confirm) {
         try {
           await adminUserApi.toggleUserStatus(user._id, newStatus)
-          uni.showToast({ title: `${actionText}成功`, icon: 'success' })
+          uni.showToast({ title: `${actionText}成功`, icon: TOAST_ICON.SUCCESS })
           fetchUsers()
         } catch (error: any) {
           uni.showToast({ title: error.message || `${actionText}失败`, icon: 'none' })
@@ -418,7 +419,7 @@ async function confirmResetPassword() {
   try {
     resetting.value = true
     await adminUserApi.resetPassword(selectedUserForPassword.value._id, newPassword.value)
-    uni.showToast({ title: '密码重置成功', icon: 'success' })
+    uni.showToast({ title: '密码重置成功', icon: TOAST_ICON.SUCCESS })
     showPasswordModal.value = false
   } catch (error: any) {
     uni.showToast({ title: error.message || '重置失败', icon: 'none' })
@@ -441,7 +442,7 @@ async function deleteUser(user: any) {
       if (res.confirm) {
         try {
           await adminUserApi.deleteAdminUser(user._id)
-          uni.showToast({ title: '删除成功', icon: 'success' })
+          uni.showToast({ title: MESSAGES.COMMON.DELETE_SUCCESS, icon: TOAST_ICON.SUCCESS })
           fetchUsers()
         } catch (error: any) {
           uni.showToast({ title: error.message || '删除失败', icon: 'none' })

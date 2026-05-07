@@ -39,7 +39,7 @@
       <view 
         class="product-card"
         v-if="relatedProduct"
-        @tap="goToProduct(relatedProduct._id)"
+        @click="goToProduct(relatedProduct._id)"
       >
         <image :src="relatedProduct.coverImage || '/static/placeholder.png'" mode="aspectFill" class="product-image" />
         <div class="product-info">
@@ -54,7 +54,7 @@
           class="mini-product-card"
           v-for="(pid, index) in videoInfo.productIds.slice(0, 5)" 
           :key="index"
-          @tap="goToProduct(pid)"
+          @click="goToProduct(pid)"
         >
           <image src="/static/placeholder.png" mode="aspectFill" class="mini-image" />
           <text class="mini-text">查看详情 →</text>
@@ -68,7 +68,7 @@
 
     <!-- CTA按钮 -->
     <view class="cta-section" v-if="videoInfo.ctaText && videoInfo.ctaLink">
-      <button class="main-cta-btn" @tap="handleCTA">
+      <button class="main-cta-btn" @click="handleCTA">
         {{ videoInfo.ctaText }} →
       </button>
     </view>
@@ -76,6 +76,7 @@
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const videoUrl = ref('')

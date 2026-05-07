@@ -118,7 +118,18 @@ router.post('/', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, pageSize = 20, role, isActive, isVIP } = req.query
+    let { page = 1, pageSize = 20, role, isActive, isVIP } = req.query
+
+    // 严格的分页参数校验与边界限制
+    page = Math.max(1, parseInt(page) || 1)
+    pageSize = Math.max(1, Math.min(100, parseInt(pageSize) || 20))
+
+    // 防止SQL/NoSQL注入：白名单校验枚举值
+    const allowedRoles = ['admin', 'user', 'operator', 'vip_user', 'super_admin']
+    if (role && !allowedRoles.includes(role)) {
+      return res.status(400).json({ success: false, message: '无效的角色参数' })
+    }
+
     const query = {}
     
     if (role) query.role = role
@@ -129,7 +140,7 @@ router.get('/', async (req, res) => {
       .select('-password')
       .sort({ createdAt: -1 })
       .skip((page - 1) * pageSize)
-      .limit(parseInt(pageSize))
+      .limit(pageSize)
 
     const total = await User.countDocuments(query)
 
@@ -138,8 +149,8 @@ router.get('/', async (req, res) => {
       data: {
         list: users,
         pagination: {
-          page: parseInt(page),
-          pageSize: parseInt(pageSize),
+          page,
+          pageSize,
           total,
           totalPages: Math.ceil(total / pageSize)
         }

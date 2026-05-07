@@ -65,22 +65,37 @@ router.post('/', async (req, res) => {
   try {
     const { title, description, category, instructor, duration, price, coverImage } = req.body
 
-    if (!title || !category || !instructor) {
-      return res.status(400).json({ success: false, message: '请填写必要信息' })
+    if (!title || !title.trim()) {
+      return res.status(400).json({ success: false, message: '课程标题不能为空' })
+    }
+    if (!category || !category.trim()) {
+      return res.status(400).json({ success: false, message: '课程分类不能为空' })
+    }
+    if (!instructor || !instructor.trim()) {
+      return res.status(400).json({ success: false, message: '讲师名称不能为空' })
+    }
+    if (title.trim().length > 200) {
+      return res.status(400).json({ success: false, message: '课程标题不能超过200字' })
+    }
+
+    const numPrice = parseFloat(price)
+    if (price !== undefined && (isNaN(numPrice) || numPrice < 0)) {
+      return res.status(400).json({ success: false, message: '价格必须为非负数' })
     }
 
     const course = await Course.create({
-      title,
-      description: description || '',
-      category,
-      instructor,
+      title: title.trim(),
+      description: (description || '').trim(),
+      category: category.trim(),
+      instructor: instructor.trim(),
       duration: duration || '',
-      price: price || 0,
+      price: isNaN(numPrice) ? 0 : numPrice,
       coverImage: coverImage || '',
       status: 'published',
-      createdBy: null
+      createdBy: req.user?._id || null
     })
 
+    console.log(`[Course] 创建成功: ${course._id} by user ${req.user?._id || 'unknown'}`)
     res.status(201).json({
       success: true,
       data: { course },
@@ -88,7 +103,7 @@ router.post('/', async (req, res) => {
     })
   } catch (error) {
     console.error('创建课程错误:', error)
-    res.status(500).json({ success: false, message: '创建课程失败' })
+    res.status(500).json({ success: false, message: '创建课程失败: ' + error.message })
   }
 })
 

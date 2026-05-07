@@ -55,7 +55,7 @@
       </view>
 
       <view class="log-list">
-        <view class="log-card card" v-for="(log, index) in logList" :key="index" @tap="showLogDetail(log)">
+        <view class="log-card card" v-for="(log, index) in logList" :key="index" @click="showLogDetail(log)">
           <view class="log-header">
             <view class="log-type-badge" :class="getActionTypeClass(log.actionType)">
               <text class="type-icon">{{ getActionTypeIcon(log.actionType) }}</text>
@@ -140,7 +140,7 @@
       <view class="distribution-section card">
         <view class="section-title">🥧 操作类型分布</view>
         <view class="distribution-list" v-if="actionDistribution.length">
-          <view class="distribution-item" v-for="(item, index) in actionDistribution" :key="index" @tap="filterByActionType(item.type)">
+          <view class="distribution-item" v-for="(item, index) in actionDistribution" :key="index" @click="filterByActionType(item.type)">
             <view class="dist-info">
               <view class="dist-type-badge" :class="getActionTypeClass(item.type)">
                 <text>{{ getActionTypeIcon(item.type) }}</text>
@@ -161,7 +161,7 @@
       <view class="top-users-section card">
         <view class="section-header">
           <text class="section-title">👥 活跃用户 TOP10</text>
-          <text class="more-link" @tap="goToLogList">查看全部 ›</text>
+          <text class="more-link" @click="goToLogList">查看全部 ›</text>
         </view>
         <view class="user-list" v-if="topUsers.length">
           <view class="user-item" v-for="(user, index) in topUsers" :key="index">
@@ -184,16 +184,16 @@
       <view class="quick-actions card">
         <view class="section-title">⚡ 快捷操作</view>
         <view class="action-grid">
-          <view class="action-btn" @tap="goToLogList({ actionType: 'LOGIN' })">
+          <view class="action-btn" @click="goToLogList({ actionType: 'LOGIN' })">
             <text class="action-icon">🔵</text><text class="action-text">登录日志</text>
           </view>
-          <view class="action-btn" @tap="goToLogList({ success: false })">
+          <view class="action-btn" @click="goToLogList({ success: false })">
             <text class="action-icon">❌</text><text class="action-text">异常日志</text>
           </view>
-          <view class="action-btn" @tap="goToLogList()">
+          <view class="action-btn" @click="goToLogList()">
             <text class="action-icon">📋</text><text class="action-text">全部日志</text>
           </view>
-          <view class="action-btn" @tap="refreshStatsData">
+          <view class="action-btn" @click="refreshStatsData">
             <text class="action-icon">🔄</text><text class="action-text">刷新数据</text>
           </view>
         </view>
@@ -334,6 +334,7 @@
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from '@/components/AdminLayout.vue'
 import auditLogApi from '@/services/auditLogApi'
@@ -491,7 +492,7 @@ async function fetchLogs(isLoadMore = false) {
 
 async function fetchStatistics() {
   try {
-    uni.showLoading({ title: '加载中...' })
+    uni.showLoading({ title: MESSAGES.COMMON.LOADING })
     const response = await auditLogApi.getStatistics()
     statsData.value = response.data || {}
     uni.hideLoading()

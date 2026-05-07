@@ -2,17 +2,17 @@
   <view 
     class="modal-overlay" 
     :class="{ 'show': visible }"
-    @tap="handleOverlayTap"
+    @click="handleOverlayTap"
   >
     <view 
       class="modal-content"
-      @tap.stop
+      @click.stop
       :style="{ maxWidth: maxWidth }"
     >
       <!-- 头部 -->
       <view class="modal-header" v-if="showHeader">
         <text class="modal-title">{{ title }}</text>
-        <view class="modal-close" v-if="closable" @tap="close">
+        <view class="modal-close" v-if="closable" @click="close">
           <text>✕</text>
         </view>
       </view>
@@ -31,14 +31,14 @@
         <view 
           class="btn btn-cancel" 
           v-if="showCancel"
-          @tap="handleCancel"
+          @click="handleCancel"
         >
           <text>{{ cancelText }}</text>
         </view>
         <view 
           class="btn btn-confirm" 
           :class="{ disabled: confirmDisabled }"
-          @tap="handleConfirm"
+          @click="handleConfirm"
         >
           <text>{{ confirmText }}</text>
         </view>

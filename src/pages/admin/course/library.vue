@@ -18,10 +18,10 @@
         <text class="search-icon">🔍</text>
         <input type="text" v-model="searchText" placeholder="搜索课程名称..." @confirm="handleSearch" class="search-input" />
       </view>
-      <view class="add-btn" @tap="showAddDialog">
+      <view class="add-btn" @click="showAddDialog">
         <text>＋ 添加</text>
       </view>
-      <view class="filter-btn" :class="{ active: showFilter }" @tap="showFilter = !showFilter">
+      <view class="filter-btn" :class="{ active: showFilter }" @click="showFilter = !showFilter">
         <text>筛选</text>
       </view>
     </view>
@@ -29,13 +29,13 @@
     <!-- 筛选面板 (保留) -->
     <view class="filter-panel" v-if="showFilter">
       <view class="filter-row">
-        <view class="filter-tag" :class="{ active: currentCategory === 'all' }" @tap="filterByCategory('all')">全部</view>
-        <view class="filter-tag" :class="{ active: currentCategory === item }" v-for="item in categories" :key="item" @tap="filterByCategory(item)">{{ item }}</view>
+        <view class="filter-tag" :class="{ active: currentCategory === 'all' }" @click="filterByCategory('all')">全部</view>
+        <view class="filter-tag" :class="{ active: currentCategory === item }" v-for="item in categories" :key="item" @click="filterByCategory(item)">{{ item }}</view>
       </view>
       <view class="filter-row">
-        <view class="filter-tag" :class="{ active: statusFilter === 'all' }" @tap="statusFilter = 'all'; applyFilters()">全部状态</view>
-        <view class="filter-tag" :class="{ active: statusFilter === 'published' }" @tap="statusFilter = 'published'; applyFilters()">已发布</view>
-        <view class="filter-tag" :class="{ active: statusFilter === 'draft' }" @tap="statusFilter = 'draft'; applyFilters()">草稿</view>
+        <view class="filter-tag" :class="{ active: statusFilter === 'all' }" @click="statusFilter = 'all'; applyFilters()">全部状态</view>
+        <view class="filter-tag" :class="{ active: statusFilter === 'published' }" @click="statusFilter = 'published'; applyFilters()">已发布</view>
+        <view class="filter-tag" :class="{ active: statusFilter === 'draft' }" @click="statusFilter = 'draft'; applyFilters()">草稿</view>
       </view>
     </view>
 
@@ -46,7 +46,7 @@
         <view class="card-header">
           <image :src="item.coverImage || '/static/images/placeholder.png'" mode="aspectFill" class="cover" />
           <view class="quick-actions">
-            <view class="quick-btn view" @tap="viewCourseDetail(item)">
+            <view class="quick-btn view" @click="viewCourseDetail(item)">
               <text>📋 详情</text>
             </view>
           </view>
@@ -87,7 +87,7 @@
           <!-- 视频数量提示 (新增) -->
           <view class="video-count-hint" v-if="item.videoIds?.length">
             <text>🎬 包含 {{ item.videoIds.length }} 个视频</text>
-            <text class="link" @tap="viewCourseVideos(item)">查看视频列表 →</text>
+            <text class="link" @click="viewCourseVideos(item)">查看视频列表 →</text>
           </view>
 
           <!-- 关联商品提示 (新增) -->
@@ -99,13 +99,13 @@
 
         <!-- 操作按钮 (优化布局) -->
         <view class="actions">
-          <view class="action-btn btn-edit" @tap="editCourse(item)">
+          <view class="action-btn btn-edit" @click="editCourse(item)">
             <text>✏️ 编辑</text>
           </view>
-          <view class="action-btn btn-videos" @tap="viewCourseVideos(item)" v-if="item.videoIds?.length">
+          <view class="action-btn btn-videos" @click="viewCourseVideos(item)" v-if="item.videoIds?.length">
             <text>🎬 视频</text>
           </view>
-          <view class="action-btn btn-delete" @tap="deleteCourse(item)">
+          <view class="action-btn btn-delete" @click="deleteCourse(item)">
             <text>🗑️ 删除</text>
           </view>
         </view>
@@ -115,28 +115,23 @@
       <view class="empty-state" v-if="!courseList.length && !loading">
         <text class="empty-icon">📚</text>
         <text class="empty-text">暂无课程数据</text>
-        <view class="empty-btn" @tap="showAddDialog">
+        <view class="empty-btn" @click="showAddDialog">
           <text>立即添加第一个课程</text>
         </view>
       </view>
 
       <!-- 加载更多 -->
       <view class="load-more" v-if="courseList.length > 0 && hasMore">
-        <text @tap="loadMore">{{ loading ? '⏳ 加载中...' : '— 上拉加载更多 —' }}</text>
+        <text @click="loadMore">{{ loading ? MESSAGES.COMMON.LOADING : '— 上拉加载更多 —' }}</text>
       </view>
     </view>
 
-    <!-- 浮动按钮 -->
-    <view class="float-btn" @tap="showAddDialog">
-      <text class="float-icon">+</text>
-    </view>
-
     <!-- 添加/编辑弹窗 (增强版 - 内联编辑) -->
-    <view class="modal-overlay" v-if="showModal" @tap.self="closeModal">
-      <view class="modal-content card" @tap.stop>
+    <view class="modal-overlay" v-if="showModal" @click.self="closeModal">
+      <view class="modal-content card" @click.stop>
         <view class="modal-header">
           <text class="modal-title">{{ editingCourse ? '✏️ 编辑课程' : '➕ 添加课程' }}</text>
-          <view class="modal-close" @tap="closeModal">✕</view>
+          <view class="modal-close" @click="closeModal">✕</view>
         </view>
 
         <scroll-view scroll-y class="modal-body">
@@ -175,10 +170,10 @@
           <view class="form-group">
             <text class="form-label">状态</text>
             <view class="status-selector">
-              <view class="status-option" :class="{ active: formData.status === 'draft' }" @tap="formData.status = 'draft'">
+              <view class="status-option" :class="{ active: formData.status === 'draft' }" @click="formData.status = 'draft'">
                 <text>📝 草稿</text>
               </view>
-              <view class="status-option" :class="{ active: formData.status === 'published' }" @tap="formData.status = 'published'">
+              <view class="status-option" :class="{ active: formData.status === 'published' }" @click="formData.status = 'published'">
                 <text>✅ 发布</text>
               </view>
             </view>
@@ -186,10 +181,10 @@
         </scroll-view>
 
         <view class="modal-footer">
-          <view class="btn btn-cancel" @tap="closeModal">
+          <view class="btn btn-cancel" @click="closeModal">
             <text>取消</text>
           </view>
-          <view class="btn btn-primary" @tap="submitForm" :class="{ disabled: !isFormValid }">
+          <view class="btn btn-primary" @click="submitForm" :class="{ disabled: !isFormValid }">
             <text>{{ editingCourse ? '保存' : '创建' }}</text>
           </view>
         </view>
@@ -197,11 +192,11 @@
     </view>
 
     <!-- 课程详情展开面板 (新增) -->
-    <view class="detail-overlay" v-if="showDetailPanel" @tap.self="showDetailPanel = false">
-      <view class="detail-panel card" @tap.stop>
+    <view class="detail-overlay" v-if="showDetailPanel" @click.self="showDetailPanel = false">
+      <view class="detail-panel card" @click.stop>
         <view class="panel-header">
           <text class="panel-title">📖 课程详情: {{ detailData.title }}</text>
-          <view class="panel-close" @tap="showDetailPanel = false">✕</view>
+          <view class="panel-close" @click="showDetailPanel = false">✕</view>
         </view>
         <scroll-view scroll-y class="panel-body">
           <view class="detail-section">
@@ -229,6 +224,7 @@
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, API_PATHS, TOAST_ICON } from '@/config/constants'
 import { ref, computed, onMounted, watch } from 'vue'
 import AdminLayout from '@/components/AdminLayout.vue'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/utils/request'
@@ -358,7 +354,7 @@ async function loadCourses() {
       params.keyword = searchText.value.trim()
     }
 
-    const res = await apiGet('/api/courses', params)
+    const res = await apiGet(API_PATHS.COURSES, params)
 
     const data = (res.data as any)?.data
     if (data?.list) {
@@ -386,7 +382,7 @@ async function loadCourses() {
     }
   } catch (error) {
     console.error('加载课程失败:', error)
-    uni.showToast({ title: '加载失败', icon: 'none' })
+    uni.showToast({ title: '加载失败', icon: TOAST_ICON.NONE })
   } finally {
     loading.value = false
   }
@@ -448,7 +444,7 @@ function closeModal() {
 
 async function submitForm() {
   if (!isFormValid.value) {
-    uni.showToast({ title: '请填写课程名称', icon: 'none' })
+    uni.showToast({ title: '请填写课程名称', icon: TOAST_ICON.NONE })
     return
   }
 
@@ -469,11 +465,11 @@ async function submitForm() {
     let response: any
     if (editingCourse.value) {
       response = await courseSync.update(
-        apiPut(`/api/courses/${editingCourse.value._id}`, payload)
+        apiPut(`${API_PATHS.COURSES}/${editingCourse.value._id}`, payload)
       )
     } else {
       response = await courseSync.create(
-        apiPost('/api/courses', payload)
+        apiPost(API_PATHS.COURSES, payload)
       )
     }
 
@@ -484,8 +480,8 @@ async function submitForm() {
     if (response.success) {
       const data = response.data
       uni.showToast({
-        title: editingCourse.value ? '✅ 已保存！用户端将实时更新' : '✅ 创建成功！用户端已收到通知',
-        icon: 'success',
+        title: editingCourse.value ? MESSAGES.ADMIN.COURSE_SAVED : MESSAGES.ADMIN.COURSE_CREATED,
+        icon: TOAST_ICON.SUCCESS,
         duration: 2000
       })
       closeModal()
@@ -493,37 +489,37 @@ async function submitForm() {
       courseList.value = []
       loadCourses()
     } else if (response.statusCode === 401) {
-      uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
+      uni.showToast({ title: '登录已过期，请重新登录', icon: TOAST_ICON.NONE })
       setTimeout(() => {
         uni.navigateTo({ url: '/pages/admin/login' })
       }, 1500)
     } else {
       const errorMsg = response.data?.message || `请求失败 (${response.statusCode})`
-      uni.showToast({ title: errorMsg, icon: 'none' })
+      uni.showToast({ title: errorMsg, icon: TOAST_ICON.NONE })
       console.error('[课程管理] 创建失败:', errorMsg, response.data)
     }
   } catch (error: any) {
     uni.hideLoading()
     console.error('[课程管理] 提交表单异常:', error)
-    uni.showToast({ title: error.errMsg || '网络错误，请重试', icon: 'none' })
+    uni.showToast({ title: error.errMsg || MESSAGES.COMMON.NETWORK_ERROR, icon: TOAST_ICON.NONE })
   }
 }
 
 async function deleteCourse(item: any) {
   uni.showModal({
-    title: '确认删除',
+    title: MESSAGES.COMMON.CONFIRM_DELETE,
     content: `确定要删除课程"${item.title}"吗？`,
     success: async (res) => {
       if (res.confirm) {
         try {
-          await apiDelete(`/api/courses/${item._id}`)
+          await apiDelete(`${API_PATHS.COURSES}/${item._id}`)
 
           courseList.value = courseList.value.filter(c => c._id !== item._id)
           total.value--
-          uni.showToast({ title: '删除成功', icon: 'success' })
+          uni.showToast({ title: MESSAGES.COMMON.DELETE_SUCCESS, icon: TOAST_ICON.SUCCESS })
         } catch (error) {
           console.error('删除课程失败:', error)
-          uni.showToast({ title: '删除失败', icon: 'none' })
+          uni.showToast({ title: '删除失败', icon: TOAST_ICON.NONE })
         }
       }
     }

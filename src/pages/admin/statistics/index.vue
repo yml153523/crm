@@ -12,14 +12,14 @@
         :class="{ active: currentTime === index }"
         v-for="(tab, index) in timeTabs"
         :key="index"
-        @tap="handleTimeChange(index)"
+        @click="handleTimeChange(index)"
       >
         <text>{{ tab.name }}</text>
       </view>
     </view>
     
     <view class="stat-cards">
-      <view class="stat-card card" v-for="(item, index) in statCards" :key="index" @tap="showStatDetail(item)">
+      <view class="stat-card card" v-for="(item, index) in statCards" :key="index" @click="showStatDetail(item)">
         <view class="card-header">
           <text class="card-icon">{{ item.icon }}</text>
           <view class="trend-badge" :class="item.trend > 0 ? 'up' : 'down'">
@@ -42,7 +42,7 @@
     <view class="chart-section card">
       <view class="section-header">
         <text class="section-title">📈 用户增长趋势</text>
-        <view class="refresh-btn" @tap="refreshChart">
+        <view class="refresh-btn" @click="refreshChart">
           <text>刷新</text>
         </view>
       </view>
@@ -62,7 +62,7 @@
               class="bar-wrapper"
               v-for="(bar, idx) in chartData"
               :key="idx"
-              @tap="showBarDetail(bar, idx)"
+              @click="showBarDetail(bar, idx)"
             >
               <view class="bar" :style="{ height: bar.height + '%' }" :class="bar.highlight ? 'highlight' : ''"></view>
               <text class="bar-value">{{ bar.value }}</text>
@@ -86,7 +86,7 @@
     <view class="table-section card">
       <view class="section-header">
         <text class="section-title">🔥 热门视频排行</text>
-        <view class="export-btn" @tap="exportData">
+        <view class="export-btn" @click="exportData">
           <text>导出</text>
         </view>
       </view>

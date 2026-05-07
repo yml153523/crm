@@ -86,7 +86,7 @@
           :class="{ active: selectedRedPacket === index }"
           v-for="(rp, index) in availableRedPackets" 
           :key="rp._id"
-          @tap="selectRedPacket(index)"
+          @click="selectRedPacket(index)"
         >
           <text class="rp-amount">¥{{ (rp.amount / 100).toFixed(2) }}</text>
           <text class="rp-expire">{{ formatExpire(rp.expiresAt) }}到期</text>
@@ -97,7 +97,7 @@
         <text>暂无可用红包</text>
       </view>
       
-      <button class="use-rp-btn" @tap="goToRedPackets" v-if="availableRedPackets.length === 0">
+      <button class="use-rp-btn" @click="goToRedPackets" v-if="availableRedPackets.length === 0">
         去领取红包
       </button>
     </view>
@@ -127,13 +127,14 @@
       </view>
     </view>
 
-    <button class="submit-btn" @tap="submitOrder" :disabled="submitting">
+    <button class="submit-btn" @click="submitOrder" :disabled="submitting">
       {{ submitting ? '提交中...' : '提交订单' }}
     </button>
   </view>
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, computed, onMounted } from 'vue'
 
 const orderItems = ref<any[]>([])
@@ -239,17 +240,17 @@ async function submitOrder() {
     
     if ((res.data as any)?.success) {
       const orderId = (res.data as any).data.order._id
-      uni.showToast({ title: '订单创建成功', icon: 'success' })
+      uni.showToast({ title: MESSAGES.COMMON.ORDER_CREATE_SUCCESS, icon: TOAST_ICON.SUCCESS })
       
       setTimeout(() => {
         uni.navigateTo({ url: `/pages/user/order/detail?id=${orderId}` })
       }, 1000)
     } else {
-      uni.showToast({ title: (res.data as any)?.message || '订单创建失败', icon: 'none' })
+      uni.showToast({ title: (res.data as any)?.message || '订单创建失败', icon: TOAST_ICON.NONE })
     }
   } catch (error) {
     console.error('提交订单失败:', error)
-    uni.showToast({ title: '网络错误', icon: 'none' })
+    uni.showToast({ title: MESSAGES.COMMON.NETWORK_ERROR_SHORT, icon: TOAST_ICON.NONE })
   } finally {
     submitting.value = false
   }
@@ -257,22 +258,22 @@ async function submitOrder() {
 
 function validateForm(): boolean {
   if (!address.value.receiverName.trim()) {
-    uni.showToast({ title: '请输入收货人姓名', icon: 'none' })
+    uni.showToast({ title: '请输入收货人姓名', icon: TOAST_ICON.NONE })
     return false
   }
   
   if (!address.value.receiverPhone || !/^1\d{10}$/.test(address.value.receiverPhone)) {
-    uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
+    uni.showToast({ title: '请输入正确的手机号', icon: TOAST_ICON.NONE })
     return false
   }
   
   if (!address.value.province || !address.value.city || !address.value.district) {
-    uni.showToast({ title: '请完善省市区信息', icon: 'none' })
+    uni.showToast({ title: '请完善省市区信息', icon: TOAST_ICON.NONE })
     return false
   }
   
   if (!address.value.detailAddress.trim()) {
-    uni.showToast({ title: '请输入详细地址', icon: 'none' })
+    uni.showToast({ title: '请输入详细地址', icon: TOAST_ICON.NONE })
     return false
   }
   

@@ -5,6 +5,42 @@ const User = require('../models/User')
 const Order = require('../models/Order')
 const RedPacketRecord = require('../models/RedPacketRecord')
 
+router.get('/dashboard', async (req, res) => {
+  try {
+    const now = new Date()
+    const todayStart = new Date(now.setHours(0, 0, 0, 0))
+    const weekAgo = new Date(now.setDate(now.getDate() - 7))
+
+    const [totalUsers, todayUsers, totalOrders, todayOrders, activeVideos, totalRedPackets] = await Promise.all([
+      User.countDocuments({}),
+      User.countDocuments({ createdAt: { $gte: todayStart } }),
+      Order.countDocuments({}),
+      Order.countDocuments({ createdAt: { $gte: todayStart } }),
+      Video.countDocuments({ status: 'published' }),
+      RedPacketRecord.countDocuments({})
+    ])
+
+    res.json({
+      success: true,
+      data: {
+        overview: {
+          totalUsers,
+          newUsersToday: todayUsers,
+          totalOrders,
+          ordersToday: todayOrders,
+          activeVideos,
+          totalRedPackets
+        },
+        period: 'today',
+        lastUpdated: new Date().toISOString()
+      }
+    })
+  } catch (error) {
+    console.error('获取仪表盘数据错误:', error)
+    res.status(500).json({ success: false, message: '获取仪表盘数据失败: ' + error.message })
+  }
+})
+
 router.get('/overview', async (req, res) => {
   try {
     const { period = 'today' } = req.query

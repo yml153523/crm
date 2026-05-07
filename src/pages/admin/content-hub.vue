@@ -6,7 +6,7 @@
       <view
         class="mtab-item"
         :class="{ active: currentTab === 'video' }"
-        @tap="switchTab('video')"
+        @click="switchTab('video')"
       >
         <text class="mtab-icon">🎬</text>
         <text class="mtab-text">视频</text>
@@ -15,7 +15,7 @@
       <view
         class="mtab-item"
         :class="{ active: currentTab === 'course' }"
-        @tap="switchTab('course')"
+        @click="switchTab('course')"
       >
         <text class="mtab-icon">📚</text>
         <text class="mtab-text">课程</text>
@@ -24,7 +24,7 @@
       <view
         class="mtab-item"
         :class="{ active: currentTab === 'product' }"
-        @tap="switchTab('product')"
+        @click="switchTab('product')"
       >
         <text class="mtab-icon">🛍️</text>
         <text class="mtab-text">商品</text>
@@ -46,10 +46,10 @@
         />
       </view>
       <view class="quick-actions">
-        <view class="action-btn add" @tap="handleAdd">
+        <view class="action-btn add" @click="handleAdd">
           <text>＋ 添加{{ getCurrentTabName() }}</text>
         </view>
-        <view class="action-btn filter" @tap="showFilter = !showFilter">
+        <view class="action-btn filter" @click="showFilter = !showFilter">
           <text>筛选</text>
         </view>
       </view>
@@ -62,16 +62,16 @@
         <view class="filter-section">
           <text class="section-title">分类</text>
           <scroll-view scroll-x class="chip-scroll">
-            <view class="chip" :class="{ active: videoCategory === 'all' }" @tap="videoCategory = 'all'">全部</view>
-            <view class="chip" :class="{ active: videoCategory === cat }" v-for="cat in videoCategories" :key="cat" @tap="videoCategory = cat">{{ cat }}</view>
+            <view class="chip" :class="{ active: videoCategory === 'all' }" @click="videoCategory = 'all'">全部</view>
+            <view class="chip" :class="{ active: videoCategory === cat }" v-for="cat in videoCategories" :key="cat" @click="videoCategory = cat">{{ cat }}</view>
           </scroll-view>
         </view>
         <view class="filter-section">
           <text class="section-title">状态</text>
           <scroll-view scroll-x class="chip-scroll">
-            <view class="chip" :class="{ active: videoStatus === 'all' }" @tap="videoStatus = 'all'">全部</view>
-            <view class="chip" :class="{ active: videoStatus === 'published' }" @tap="videoStatus = 'published'">已发布</view>
-            <view class="chip" :class="{ active: videoStatus === 'draft' }" @tap="videoStatus = 'draft'">草稿</view>
+            <view class="chip" :class="{ active: videoStatus === 'all' }" @click="videoStatus = 'all'">全部</view>
+            <view class="chip" :class="{ active: videoStatus === 'published' }" @click="videoStatus = 'published'">已发布</view>
+            <view class="chip" :class="{ active: videoStatus === 'draft' }" @click="videoStatus = 'draft'">草稿</view>
           </scroll-view>
         </view>
       </view>
@@ -81,16 +81,16 @@
         <view class="filter-section">
           <text class="section-title">分类</text>
           <scroll-view scroll-x class="chip-scroll">
-            <view class="chip" :class="{ active: courseCategory === 'all' }" @tap="courseCategory = 'all'">全部</view>
-            <view class="chip" :class="{ active: courseCategory === cat }" v-for="cat in courseCategories" :key="cat" @tap="courseCategory = cat">{{ cat }}</view>
+            <view class="chip" :class="{ active: courseCategory === 'all' }" @click="courseCategory = 'all'">全部</view>
+            <view class="chip" :class="{ active: courseCategory === cat }" v-for="cat in courseCategories" :key="cat" @click="courseCategory = cat">{{ cat }}</view>
           </scroll-view>
         </view>
         <view class="filter-section">
           <text class="section-title">状态</text>
           <scroll-view scroll-x class="chip-scroll">
-            <view class="chip" :class="{ active: courseStatus === 'all' }" @tap="courseStatus = 'all'">全部</view>
-            <view class="chip" :class="{ active: courseStatus === 'published' }" @tap="courseStatus = 'published'">已发布</view>
-            <view class="chip" :class="{ active: courseStatus === 'draft' }" @tap="courseStatus = 'draft'">草稿</view>
+            <view class="chip" :class="{ active: courseStatus === 'all' }" @click="courseStatus = 'all'">全部</view>
+            <view class="chip" :class="{ active: courseStatus === 'published' }" @click="courseStatus = 'published'">已发布</view>
+            <view class="chip" :class="{ active: courseStatus === 'draft' }" @click="courseStatus = 'draft'">草稿</view>
           </scroll-view>
         </view>
       </view>
@@ -100,16 +100,16 @@
         <view class="filter-section">
           <text class="section-title">分类</text>
           <scroll-view scroll-x class="chip-scroll">
-            <view class="chip" :class="{ active: productCategory === 'all' }" @tap="productCategory = 'all'">全部</view>
-            <view class="chip" :class="{ active: productCategory === cat.value }" v-for="cat in productCategories" :key="cat.value" @tap="productCategory = cat.value">{{ cat.label }}</view>
+            <view class="chip" :class="{ active: productCategory === 'all' }" @click="productCategory = 'all'">全部</view>
+            <view class="chip" :class="{ active: productCategory === cat.value }" v-for="cat in productCategories" :key="cat.value" @click="productCategory = cat.value">{{ cat.label }}</view>
           </scroll-view>
         </view>
         <view class="filter-section">
           <text class="section-title">状态</text>
           <scroll-view scroll-x class="chip-scroll">
-            <view class="chip" :class="{ active: productStatus === 'all' }" @tap="productStatus = 'all'">全部</view>
-            <view class="chip" :class="{ active: productStatus === 'active' }" @tap="productStatus = 'active'">在售</view>
-            <view class="chip" :class="{ active: productStatus === 'inactive' }" @tap="productStatus = 'inactive'">下架</view>
+            <view class="chip" :class="{ active: productStatus === 'all' }" @click="productStatus = 'all'">全部</view>
+            <view class="chip" :class="{ active: productStatus === 'active' }" @click="productStatus = 'active'">在售</view>
+            <view class="chip" :class="{ active: productStatus === 'inactive' }" @click="productStatus = 'inactive'">下架</view>
           </scroll-view>
         </view>
       </view>
@@ -136,15 +136,15 @@
           </view>
         </view>
         <view class="card-actions">
-          <view class="action-btn" @tap="editVideo(item)">编辑</view>
-          <view class="action-btn danger" @tap="deleteVideo(item)">删除</view>
+          <view class="action-btn" @click="editVideo(item)">编辑</view>
+          <view class="action-btn danger" @click="deleteVideo(item)">删除</view>
         </view>
       </view>
 
       <view class="empty-state" v-if="filteredVideoList.length === 0">
         <text class="empty-icon">🎬</text>
         <text class="empty-text">暂无视频内容</text>
-        <view class="empty-btn" @tap="handleAdd">添加第一个视频</view>
+        <view class="empty-btn" @click="handleAdd">添加第一个视频</view>
       </view>
     </view>
 
@@ -167,15 +167,15 @@
           </view>
         </view>
         <view class="card-actions">
-          <view class="action-btn" @tap="editCourse(item)">编辑</view>
-          <view class="action-btn danger" @tap="deleteCourse(item)">删除</view>
+          <view class="action-btn" @click="editCourse(item)">编辑</view>
+          <view class="action-btn danger" @click="deleteCourse(item)">删除</view>
         </view>
       </view>
 
       <view class="empty-state" v-if="filteredCourseList.length === 0">
         <text class="empty-icon">📚</text>
         <text class="empty-text">暂无课程内容</text>
-        <view class="empty-btn" @tap="handleAdd">添加第一门课程</view>
+        <view class="empty-btn" @click="handleAdd">添加第一门课程</view>
       </view>
     </view>
 
@@ -199,15 +199,15 @@
           </view>
         </view>
         <view class="card-actions">
-          <view class="action-btn" @tap="editProduct(item)">编辑</view>
-          <view class="action-btn danger" @tap="deleteProduct(item)">删除</view>
+          <view class="action-btn" @click="editProduct(item)">编辑</view>
+          <view class="action-btn danger" @click="deleteProduct(item)">删除</view>
         </view>
       </view>
 
       <view class="empty-state" v-if="filteredProductList.length === 0">
         <text class="empty-icon">🛍️</text>
         <text class="empty-text">暂无商品内容</text>
-        <view class="empty-btn" @tap="handleAdd">添加第一个商品</view>
+        <view class="empty-btn" @click="handleAdd">添加第一个商品</view>
       </view>
     </view>
 
@@ -216,6 +216,7 @@
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, computed, onMounted } from 'vue'
 import { apiGet } from '@/utils/request'
 
@@ -385,7 +386,7 @@ function editProduct(item: any) {
 // 删除操作
 async function deleteVideo(item: any) {
   const res = await uni.showModal({
-    title: '确认删除',
+    title: MESSAGES.COMMON.CONFIRM_DELETE,
     content: `确定要删除视频"${item.title}"吗？`
   })
   if (res.confirm) {
@@ -396,7 +397,7 @@ async function deleteVideo(item: any) {
 
 async function deleteCourse(item: any) {
   const res = await uni.showModal({
-    title: '确认删除',
+    title: MESSAGES.COMMON.CONFIRM_DELETE,
     content: `确定要删除课程"${item.title}"吗？`
   })
   if (res.confirm) {
@@ -407,7 +408,7 @@ async function deleteCourse(item: any) {
 
 async function deleteProduct(item: any) {
   const res = await uni.showModal({
-    title: '确认删除',
+    title: MESSAGES.COMMON.CONFIRM_DELETE,
     content: `确定要删除商品"${item.name || item.title}"吗？`
   })
   if (res.confirm) {

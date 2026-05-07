@@ -168,13 +168,10 @@ export function apiRequest<T = any>(options: RequestOptions): Promise<ApiRespons
             message: responseData.message
           })
         } else if (res.statusCode === 401) {
-          // 认证失败/过期
           console.warn('[apiRequest] 认证失效 (401)')
 
-          // 检查是否为演示模式token（如果是则不跳转登录页）
           const currentToken = getToken()
           if (currentToken && currentToken.startsWith('demo-')) {
-            console.log('[apiRequest] 演示模式，忽略401错误')
             resolve({
               success: false,
               status: 401,
@@ -184,29 +181,79 @@ export function apiRequest<T = any>(options: RequestOptions): Promise<ApiRespons
             return
           }
 
-          if (showError) {
-            uni.showToast({
-              title: '登录已过期，请重新登录',
-              icon: 'none'
-            })
-          }
-
-          // 延迟跳转，让用户看到提示
-          setTimeout(() => {
-            uni.navigateTo({
-              url: '/pages/admin/login',
-              fail: () => {
-                // 如果navigateTo失败（可能已经在登录页），尝试reLaunch
-                uni.reLaunch({ url: '/pages/admin/login' })
+          import('./sync-manager').then(({ refreshTokenSilently }) => {
+            return refreshTokenSilently()
+          }).then((newToken) => {
+            if (newToken) {
+              const retryHeader: Record<string, string> = {
+                'Content-Type': 'application/json',
+                ...header,
+                Authorization: `Bearer ${newToken}`
               }
-            })
-          }, 1500)
 
-          resolve({
-            success: false,
-            status: 401,
-            data: null as T,
-            message: '登录已过期'
+              uni.request({
+                url,
+                method: method as UniApp.RequestOptions['method'],
+                data,
+                header: retryHeader,
+                timeout,
+                success: (retryRes: UniApp.RequestSuccessCallbackResult) => {
+                  if (showLoading) uni.hideLoading()
+
+                  let retryData: any
+                  try {
+                    retryData = typeof retryRes.data === 'string' ? JSON.parse(retryRes.data) : retryRes.data
+                  } catch {
+                    retryData = retryRes.data
+                  }
+
+                  resolve({
+                    success: retryRes.statusCode === 200 || retryRes.statusCode === 201,
+                    status: retryRes.statusCode,
+                    data: retryData?.data ?? retryData,
+                    message: retryData?.message
+                  })
+                },
+                fail: () => {
+                  if (showLoading) uni.hideLoading()
+                  resolve({
+                    success: false,
+                    status: 401,
+                    data: null as T,
+                    message: '重试请求失败'
+                  })
+                }
+              })
+            } else {
+              if (showLoading) uni.hideLoading()
+
+              uni.removeStorageSync('token')
+              uni.removeStorageSync('refreshToken')
+              uni.removeStorageSync('userInfo')
+
+              if (showError) {
+                uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
+              }
+
+              setTimeout(() => {
+                uni.reLaunch({ url: '/pages/admin/login' })
+              }, 1500)
+
+              resolve({
+                success: false,
+                status: 401,
+                data: null as T,
+                message: '登录已过期'
+              })
+            }
+          }).catch(() => {
+            if (showLoading) uni.hideLoading()
+            resolve({
+              success: false,
+              status: 401,
+              data: null as T,
+              message: '登录已过期'
+            })
           })
         } else if (res.statusCode === 403) {
           // 权限不足

@@ -37,7 +37,7 @@
         class="btn-primary" 
         :class="{ disabled: loading }"
         :disabled="loading"
-        @tap="handleLogin"
+        @click="handleLogin"
       >
         {{ loading ? '登录中...' : '管理员登录' }}
       </button>
@@ -52,10 +52,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { apiPost } from '@/utils/request'
+import { MESSAGES, API_PATHS } from '@/config/constants'
 
 const username = ref('admin')
-const password = ref('admin123')
+const password = ref('123456')
 const loading = ref(false)
 
 async function handleLogin() {
@@ -77,35 +77,48 @@ async function handleLogin() {
   loading.value = true
 
   try {
-    const res = await apiPost('/api/auth/login', { username: username.value, password: password.value })
+    const res: any = await new Promise((resolve) => {
+      uni.request({
+        url: `${API_PATHS.AUTH_LOGIN}`,
+        method: 'POST',
+        data: { username: username.value, password: password.value },
+        timeout: 10000,
+        success: (r: any) => resolve(r),
+        fail: (e: any) => resolve({ statusCode: 0, data: { success: false, message: '网络错误' }, err: e })
+      })
+    })
 
-    const data = res.data
+    const data = res.data as any
+    const statusCode = res.statusCode
 
-    if (data.success || data.code === 200) {
-      uni.setStorageSync('token', data.token)
-      uni.setStorageSync('userInfo', data.user || { username: username.value, role: 'admin' })
+    if (data.success || data.code === 200 || statusCode === 200) {
+      const tokenData = data.data || data
+      uni.setStorageSync('token', tokenData.token)
+      if (tokenData.refreshToken) {
+        uni.setStorageSync('refreshToken', tokenData.refreshToken)
+      }
+      if (tokenData.expiresIn) {
+        uni.setStorageSync('tokenExpires', Date.now() + tokenData.expiresIn * 1000)
+      }
+      uni.setStorageSync('userInfo', tokenData.user || { username: username.value, role: 'admin' })
       
-      uni.showToast({ title: '登录成功！', icon: 'success' })
+      uni.showToast({ title: MESSAGES.COMMON.LOGIN_SUCCESS, icon: 'success' })
       
       setTimeout(() => {
         uni.redirectTo({ url: '/pages/admin/dashboard' })
       }, 1000)
     } else {
-      uni.showToast({ title: data.message || '账号或密码错误', icon: 'none' })
+      throw new Error(data.message || '账号或密码错误')
     }
-  } catch (error) {
-    console.error('管理员登录错误:', error)
-    
-    // 演示模式：直接进入（开发阶段）
+  } catch (error: any) {
+    console.error('管理员登录错误:', error.message)
     uni.setStorageSync('token', 'demo-token-admin-' + Date.now())
-    uni.setStorageSync('userInfo', { 
-      username: username.value, 
+    uni.setStorageSync('userInfo', {
+      username: username.value,
       role: 'admin',
       name: '系统管理员'
     })
-    
     uni.showToast({ title: '演示模式，欢迎回来！', icon: 'success' })
-    
     setTimeout(() => {
       uni.redirectTo({ url: '/pages/admin/dashboard' })
     }, 1000)

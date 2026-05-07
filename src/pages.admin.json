@@ -1,110 +1,104 @@
-// 管理端构建配置（8081端口 - PC管理后台）- 完整版
 {
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+    }
+  },
   "pages": [
     {
       "path": "pages/admin/login",
       "style": {
-        "navigationStyle": "custom",
         "navigationBarTitleText": "管理员登录"
       }
     },
     {
       "path": "pages/admin/dashboard",
       "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
-      }
-    },
-    {
-      "path": "pages/admin/content-hub",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "",
-        "showBack": true
+        "navigationBarTitleText": "管理后台",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/admin/member/list",
       "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "会员管理"
       }
     },
     {
       "path": "pages/admin/course/library",
       "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "内容管理中心",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/admin/content-hub",
+      "style": {
+        "navigationBarTitleText": "内容中心",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/admin/video/list",
       "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
-      }
-    },
-    {
-      "path": "pages/admin/remind/index",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
-      }
-    },
-    {
-      "path": "pages/admin/red-packet/list",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
-      }
-    },
-    {
-      "path": "pages/admin/statistics/index",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "视频管理"
       }
     },
     {
       "path": "pages/admin/product/list",
       "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "商品管理"
       }
     },
     {
-      "path": "pages/admin/audit-log/index",
+      "path": "pages/admin/red-packet/list",
       "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "红包管理"
+      }
+    },
+    {
+      "path": "pages/admin/statistics/index",
+      "style": {
+        "navigationBarTitleText": "数据统计",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/admin/abtest/index",
+      "style": {
+        "navigationBarTitleText": "A/B测试"
+      }
+    },
+    {
+      "path": "pages/admin/remind/index",
+      "style": {
+        "navigationBarTitleText": "提醒管理"
+      }
+    },
+    {
+      "path": "pages/admin/audit-log/list",
+      "style": {
+        "navigationBarTitleText": "日志中心"
       }
     },
     {
       "path": "pages/admin/admin-user/list",
       "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "管理员列表"
       }
     },
     {
       "path": "pages/admin/settings/index",
       "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
-      }
-    },
-    {
-      "path": "pages/admin/profile/index",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "系统设置"
       }
     }
   ],
   "globalStyle": {
-    "navigationBarTextStyle": "white",
-    "navigationBarTitleText": "",
-    "navigationBarBackgroundColor": "#1A1A2E",
-    "backgroundColor": "#F5F6FA"
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "CRM管理后台",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F5F5F5"
   }
 }

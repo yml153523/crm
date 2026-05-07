@@ -1,7 +1,30 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { SERVER_CONFIG } = require('../config/constants');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'crm-secret-key-2026';
+const JWT_SECRET = SERVER_CONFIG.JWT_SECRET;
+
+// 用户信息缓存（TTL: 5分钟）
+const userCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5分钟
+
+function getCachedUser(token) {
+  const cached = userCache.get(token);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.user;
+  }
+  return null;
+}
+
+function setCachedUser(token, user) {
+  userCache.set(token, { user, timestamp: Date.now() });
+
+  // 缓存大小限制，防止内存泄漏
+  if (userCache.size > 1000) {
+    const oldestKey = userCache.keys().next().value;
+    userCache.delete(oldestKey);
+  }
+}
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -31,7 +54,14 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    const user = await User.findById(decoded.id).select('-password').lean();
+    // 优先从缓存获取用户信息
+    let user = getCachedUser(token);
+    if (!user) {
+      user = await User.findById(decoded.id).select('-password').lean();
+      if (user) {
+        setCachedUser(token, user);
+      }
+    }
 
     if (!user) {
       return res.status(401).json({

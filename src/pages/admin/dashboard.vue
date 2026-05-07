@@ -7,9 +7,22 @@
         <view class="logo" v-if="!isCollapsed">
           <text class="logo-icon">🎯</text>
           <text class="logo-text">CRM系统</text>
+          <text class="mobile-indicator">{{ showMobileMenu ? '▼' : '☰' }}</text>
         </view>
         <text class="logo-icon-small" v-else>🎯</text>
-        <view class="collapse-btn" @tap="toggleSidebar">
+        <view
+          class="close-btn"
+          :class="{ 'close-btn-visible': showMobileMenu }"
+          @click.stop="closeMobileMenu"
+        >
+          <text class="close-icon">✕</text>
+          <text class="close-text">收起</text>
+        </view>
+        <view
+          v-if="!isMobile && !showMobileMenu"
+          class="collapse-btn"
+          @click.stop="toggleSidebar"
+        >
           <text>{{ isCollapsed ? '»' : '«' }}</text>
         </view>
       </view>
@@ -32,7 +45,7 @@
           v-for="(item, index) in menuItems" 
           :key="index"
           :class="{ active: currentPath === item.path }"
-          @tap="navigateTo(item.path)"
+          @click="navigateTo(item.path)"
         >
           <view class="nav-icon">
             <text>{{ item.icon }}</text>
@@ -46,13 +59,13 @@
 
       <!-- 底部操作 -->
       <view class="sidebar-footer">
-        <view class="nav-item" @tap="handleLogout" v-if="!isCollapsed">
+        <view class="nav-item" @click="handleLogout" v-if="!isCollapsed">
           <view class="nav-icon logout">
             <text>🚪</text>
           </view>
           <text class="nav-label">退出登录</text>
         </view>
-        <view class="nav-item" @tap="handleLogout" v-else>
+        <view class="nav-item" @click="handleLogout" v-else>
           <view class="nav-icon logout">
             <text>🚪</text>
           </view>
@@ -66,7 +79,7 @@
       <view class="top-header">
         <view class="header-left">
           <!-- 移动端菜单按钮 -->
-          <view class="menu-btn" @tap="toggleMobileMenu">
+          <view class="menu-btn" @click="toggleMobileMenu">
             <text>☰</text>
           </view>
           <text class="page-title">{{ currentPageTitle }}</text>
@@ -103,7 +116,7 @@
               <text class="section-icon">📋</text>
               <text class="section-title">最新动态</text>
             </view>
-            <text class="more-link" @tap="goToRemind">查看全部 ›</text>
+            <text class="more-link" @click="goToRemind">查看全部 ›</text>
           </view>
 
           <view class="activity-list" v-if="recentList.length">
@@ -115,7 +128,7 @@
                 <text class="activity-text">{{ item.text }}</text>
                 <text class="activity-time">{{ item.time }}</text>
               </view>
-              <view class="activity-action" v-if="item.action" @tap="handleActivityAction(item)">
+              <view class="activity-action" v-if="item.action" @click="handleActivityAction(item)">
                 <text>{{ item.action }}</text>
               </view>
             </view>
@@ -139,7 +152,7 @@
               </view>
             </view>
             <view class="header-actions">
-              <text class="action-link" @tap="addTodo">＋添加</text>
+              <text class="action-link" @click="addTodo">＋添加</text>
             </view>
           </view>
 
@@ -151,7 +164,7 @@
               :key="index"
             >
               <view class="todo-priority" :class="'priority-' + (item.priority || 'normal')"></view>
-              <view class="todo-main" @tap="toggleTodo(index)">
+              <view class="todo-main" @click="toggleTodo(index)">
                 <view class="todo-checkbox" :class="{ checked: item.done }">
                   <text v-if="item.done">✓</text>
                 </view>
@@ -163,8 +176,8 @@
                   </view>
                 </view>
               </view>
-              <view class="todo-actions" @tap.stop>
-                <text class="ta-btn delete" @tap="deleteTodo(index)">🗑️</text>
+              <view class="todo-actions" @click.stop>
+                <text class="ta-btn delete" @click="deleteTodo(index)">🗑️</text>
               </view>
             </view>
           </view>
@@ -178,7 +191,7 @@
 
         <!-- 数据分析面板（可折叠） -->
         <view class="section card analytics-section">
-          <view class="section-header collapsible" @tap="toggleAnalytics">
+          <view class="section-header collapsible" @click="toggleAnalytics">
             <view class="sh-left">
               <text class="section-icon">📊</text>
               <text class="section-title">数据分析</text>
@@ -195,7 +208,7 @@
             <view class="metrics-grid">
               <view class="metric-card" v-for="(stat, index) in statsData" :key="index">
                 <text class="metric-label">{{ stat.label }}</text>
-                <text class="metric-value" :style="{ color: stat.trend >= 0 ? '#34C759' : '#FF3B30' }">
+                <text class="metric-value" :style="{ color: stat.trend >= 0 ? UI_COLORS.SUCCESS : UI_COLORS.DANGER }">
                   {{ stat.value }}
                 </text>
                 <view class="metric-trend" :class="stat.trend >= 0 ? 'up' : 'down'">
@@ -209,36 +222,40 @@
     </view>
 
     <!-- 移动端遮罩层 -->
-    <view class="mobile-overlay" v-if="showMobileMenu" @tap="closeMobileMenu"></view>
+    <view class="mobile-overlay" v-if="showMobileMenu" @click="closeMobileMenu"></view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import MarketingFunnel from '@/components/MarketingFunnel.vue'
 import { apiGet } from '@/utils/request'
+import { UI_COLORS, MESSAGES, PAGE_URLS } from '@/config/constants'
 
 const isCollapsed = ref(false)
 const showMobileMenu = ref(false)
 const currentPath = ref('/pages/admin/dashboard')
 const userName = ref('管理员')
 const currentUserRole = ref('user')
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
+
+const isMobile = computed(() => windowWidth.value <= 768)
 
 const menuItems = ref<any[]>([])
 
 const allMenuItems = [
   // 核心业务管理
-  { icon: '👥', label: '会员管理', path: '/pages/admin/member/list', bgColor: '#667eea', role: 'admin' },
-  { icon: '🎯', label: '内容管理中心', path: '/pages/admin/content-hub', bgColor: '#FF6B35', role: 'admin', badge: 'NEW' },
-  { icon: '🧧', label: '红包管理', path: '/pages/admin/red-packet/list', bgColor: '#FF3B30', role: 'admin' },
+  { icon: '👥', label: MESSAGES.ADMIN.USER_MANAGEMENT, path: PAGE_URLS.ADMIN.USERS, bgColor: '#667eea', role: 'admin' },
+  { icon: '🎯', label: MESSAGES.ADMIN.CONTENT_CENTER, path: PAGE_URLS.ADMIN.CONTENT_HUB, bgColor: '#FF6B35', role: 'admin', badge: 'NEW' },
+  { icon: '🧧', label: MESSAGES.ADMIN.REDPACKET_MANAGEMENT, path: PAGE_URLS.ADMIN.REDPACKETS, bgColor: '#FF3B30', role: 'admin' },
   { icon: '🔔', label: '提醒中心', path: '/pages/admin/remind/index', bgColor: '#43e97b', role: 'admin' },
 
   // 数据与分析
-  { icon: '📊', label: '数据统计', path: '/pages/admin/statistics/index', bgColor: '#a18cd1', role: 'admin' },
+  { icon: '📊', label: MESSAGES.ADMIN.STATISTICS, path: PAGE_URLS.ADMIN.STATISTICS, bgColor: '#a18cd1', role: 'admin' },
   { icon: '🧪', label: 'A/B测试', path: '/pages/admin/abtest/index', bgColor: '#6C5CE7', role: 'admin' },
 
   // 系统管理
-  { icon: '📋', label: '日志中心', path: '/pages/admin/audit-log/index', bgColor: '#667eea', role: 'all' },
+  { icon: '📋', label: '日志中心', path: PAGE_URLS.ADMIN.AUDIT_LOG, bgColor: '#667eea', role: 'all' },
 
   // 管理层功能（仅super_admin可见）
   { icon: '👤', label: '管理员', path: '/pages/admin/admin-user/list', bgColor: '#fa709a', role: 'super_admin' },
@@ -270,15 +287,22 @@ function formatDate() {
 }
 
 function formatTimeAgo(dateStr: string): string {
+  if (!dateStr) return ''
   const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return dateStr
   const now = new Date()
   const diff = now.getTime() - date.getTime()
 
+  if (diff < 0) return '刚刚'
+
+  const seconds = Math.floor(diff / 1000)
   const minutes = Math.floor(diff / 60000)
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(diff / 86400000)
 
-  if (minutes < 60) {
+  if (seconds < 60) {
+    return '刚刚'
+  } else if (minutes < 60) {
     return `${minutes}分钟前`
   } else if (hours < 24) {
     return `${hours}小时前`
@@ -297,14 +321,64 @@ const statsData = ref([
   { icon: '🎬', label: '视频数量', value: '--', color: '#FF3B30', trend: 0 }
 ])
 
-// 最近动态 - 使用动态时间
-const recentList = ref([
-  { text: '新用户 张三 注册成功', time: formatTimeAgo(new Date(Date.now() - 5 * 60000).toISOString()), color: '#E8F5E9', icon: '👤', action: '查看' },
-  { text: '用户 李四 购买了《高级销售技巧》课程', time: formatTimeAgo(new Date(Date.now() - 15 * 60000).toISOString()), color: '#E3F2FD', icon: '📚', action: '详情' },
-  { text: '管理员 发布了新课程《客户关系维护》', time: formatTimeAgo(new Date(Date.now() - 3600000).toISOString()), color: '#FFF3E0', icon: '🎯' },
-  { text: '系统自动备份完成', time: formatTimeAgo(new Date(Date.now() - 2 * 3600000).toISOString()), color: '#F5F5F5', icon: '💾' },
-  { text: '红包提醒已批量发送 (15人)', time: formatTimeAgo(new Date(Date.now() - 3 * 3600000).toISOString()), color: '#FFEBEE', icon: '🧧', action: '记录' }
-])
+const recentList = ref<any[]>([])
+
+async function loadRecentActivities() {
+  try {
+    const token = uni.getStorageSync('token') || ''
+    const isDemoMode = token.startsWith('demo-')
+
+    if (isDemoMode) {
+      recentList.value = [
+        { text: '演示模式 - 暂无真实动态', time: '刚刚', color: '#F5F5F5', icon: '📋' }
+      ]
+      return
+    }
+
+    const res = await apiGet('/api/audit-logs', { page: 1, pageSize: 5 })
+    if (res && res.data && res.data.success !== false) {
+      const logs = res.data.data?.logs || res.data.data || []
+      if (Array.isArray(logs) && logs.length > 0) {
+        recentList.value = logs.map((log: any) => ({
+          text: `${log.userName || '用户'} ${log.action || '操作'} ${log.resource || ''}`,
+          time: formatTimeAgo(log.createdAt || log.timestamp),
+          color: getActivityColor(log.action),
+          icon: getActivityIcon(log.resource),
+          action: '详情'
+        }))
+      } else {
+        recentList.value = [
+          { text: '暂无系统动态', time: '', color: '#F5F5F5', icon: '📋' }
+        ]
+      }
+    }
+  } catch (error) {
+    console.error('加载最新动态失败:', error)
+    recentList.value = [
+      { text: '暂无系统动态', time: '', color: '#F5F5F5', icon: '📋' }
+    ]
+  }
+}
+
+function getActivityColor(action: string): string {
+  if (!action) return '#F5F5F5'
+  if (action.includes('创建') || action.includes('注册')) return '#E8F5E9'
+  if (action.includes('删除')) return '#FFEBEE'
+  if (action.includes('更新') || action.includes('修改')) return '#FFF3E0'
+  if (action.includes('登录')) return '#E3F2FD'
+  return '#F5F5F5'
+}
+
+function getActivityIcon(resource: string): string {
+  if (!resource) return '📌'
+  if (resource.includes('用户') || resource.includes('会员')) return '👤'
+  if (resource.includes('课程')) return '📚'
+  if (resource.includes('视频')) return '🎬'
+  if (resource.includes('红包')) return '🧧'
+  if (resource.includes('商品')) return '🛒'
+  if (resource.includes('订单')) return '📦'
+  return '📋'
+}
 
 // 数据分析面板折叠状态
 const showAnalytics = ref(false)
@@ -446,7 +520,7 @@ function addTodo() {
 
 function deleteTodo(index: number) {
   uni.showModal({
-    title: '确认删除',
+    title: MESSAGES.COMMON.CONFIRM_DELETE,
     content: '确定要删除这个待办事项吗？',
     success: (res) => {
       if (res.confirm) {
@@ -546,6 +620,17 @@ async function loadStatistics() {
 onMounted(() => {
   initUserRole()
   loadStatistics()
+  loadRecentActivities()
+  windowWidth.value = window.innerWidth
+  window.addEventListener('resize', handleResize)
+})
+
+const handleResize = () => {
+  windowWidth.value = window.innerWidth
+}
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
@@ -624,6 +709,43 @@ onMounted(() => {
   &:active {
     background: rgba(255, 255, 255, 0.2);
   }
+}
+
+.close-btn {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #FF3B30, #FF6B6B);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.4);
+  transition: visibility 0s 0.3s, opacity 0.3s ease;
+}
+
+.close-btn-visible {
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.close-icon {
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.close-text {
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mobile-indicator {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-left: 4px;
 }
 
 /* 用户信息 */
@@ -1097,15 +1219,21 @@ onMounted(() => {
   }
 
   .sidebar {
-    width: 260px;
+    width: 100% !important;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     box-shadow: none;
   }
 
   .sidebar.mobile-show {
-    transform: translateX(0);
+    transform: translateX(0) !important;
     box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .sidebar.mobile-show .close-btn-visible {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }
 
   /* 显示侧边栏内的所有文字 */
@@ -1392,7 +1520,12 @@ onMounted(() => {
   }
 
   .sidebar {
-    width: 100%; /* 超小屏全宽侧边栏 */
+    width: 100% !important; /* 超小屏全宽侧边栏 */
+  }
+
+  .sidebar.mobile-show .close-btn-visible {
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 }
 

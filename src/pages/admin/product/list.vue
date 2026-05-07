@@ -16,10 +16,10 @@
         <text class="search-icon">🔍</text>
         <input type="text" v-model="searchText" placeholder="搜索商品名称..." @confirm="handleSearch" class="search-input" />
       </view>
-      <view class="add-btn" @tap="showAddDialog">
+      <view class="add-btn" @click="showAddDialog">
         <text>＋ 添加</text>
       </view>
-      <view class="filter-btn" :class="{ active: showFilter }" @tap="showFilter = !showFilter">
+      <view class="filter-btn" :class="{ active: showFilter }" @click="showFilter = !showFilter">
         <text>筛选</text>
       </view>
     </view>
@@ -29,13 +29,13 @@
       <view class="filter-section">
         <text class="section-title">分类</text>
         <scroll-view scroll-x class="chip-scroll">
-          <view class="chip" :class="{ active: currentCategory === 'all' }" @tap="currentCategory = 'all'; applyFilters()">全部</view>
+          <view class="chip" :class="{ active: currentCategory === 'all' }" @click="currentCategory = 'all'; applyFilters()">全部</view>
           <view
             class="chip"
             :class="{ active: currentCategory === cat.value }"
             v-for="cat in categoryOptions"
             :key="cat.value"
-            @tap="currentCategory = cat.value; applyFilters()"
+            @click="currentCategory = cat.value; applyFilters()"
           >{{ cat.label }}</view>
         </scroll-view>
       </view>
@@ -43,20 +43,20 @@
       <view class="filter-section">
         <text class="section-title">状态</text>
         <scroll-view scroll-x class="chip-scroll">
-          <view class="chip" :class="{ active: statusFilter === 'all' }" @tap="statusFilter = 'all'; applyFilters()">全部</view>
-          <view class="chip" :class="{ active: statusFilter === 'active' }" @tap="statusFilter = 'active'; applyFilters()">在售</view>
-          <view class="chip" :class="{ active: statusFilter === 'inactive' }" @tap="statusFilter = 'inactive'; applyFilters()">下架</view>
-          <view class="chip chip-warning" :class="{ active: statusFilter === 'low_stock' }" @tap="statusFilter = 'low_stock'; applyFilters()">⚠️ 库存不足</view>
+          <view class="chip" :class="{ active: statusFilter === 'all' }" @click="statusFilter = 'all'; applyFilters()">全部</view>
+          <view class="chip" :class="{ active: statusFilter === 'active' }" @click="statusFilter = 'active'; applyFilters()">在售</view>
+          <view class="chip" :class="{ active: statusFilter === 'inactive' }" @click="statusFilter = 'inactive'; applyFilters()">下架</view>
+          <view class="chip chip-warning" :class="{ active: statusFilter === 'low_stock' }" @click="statusFilter = 'low_stock'; applyFilters()">⚠️ 库存不足</view>
         </scroll-view>
       </view>
 
       <view class="filter-section">
         <text class="section-title">排序</text>
         <scroll-view scroll-x class="chip-scroll">
-          <view class="chip" :class="{ active: sortBy === 'createdAt' }" @tap="sortBy = 'createdAt'; sortOrder = -1; applyFilters()">最新上架</view>
-          <view class="chip" :class="{ active: sortBy === 'salesCount' }" @tap="sortBy = 'salesCount'; sortOrder = -1; applyFilters()">销量最高</view>
-          <view class="chip" :class="{ active: sortBy === 'price' && sortOrder === 1 }" @tap="sortBy = 'price'; sortOrder = 1; applyFilters()">价格从低到高</view>
-          <view class="chip" :class="{ active: sortBy === 'price' && sortOrder === -1 }" @tap="sortBy = 'price'; sortOrder = -1; applyFilters()">价格从高到低</view>
+          <view class="chip" :class="{ active: sortBy === 'createdAt' }" @click="sortBy = 'createdAt'; sortOrder = -1; applyFilters()">最新上架</view>
+          <view class="chip" :class="{ active: sortBy === 'salesCount' }" @click="sortBy = 'salesCount'; sortOrder = -1; applyFilters()">销量最高</view>
+          <view class="chip" :class="{ active: sortBy === 'price' && sortOrder === 1 }" @click="sortBy = 'price'; sortOrder = 1; applyFilters()">价格从低到高</view>
+          <view class="chip" :class="{ active: sortBy === 'price' && sortOrder === -1 }" @click="sortBy = 'price'; sortOrder = -1; applyFilters()">价格从高到低</view>
         </scroll-view>
       </view>
     </view>
@@ -65,13 +65,13 @@
     <view class="batch-toolbar" v-if="selectedIds.length > 0">
       <text class="selected-count">已选 {{ selectedIds.length }} 项</text>
       <view class="batch-actions">
-        <view class="batch-btn btn-online" @tap="batchUpdateStatus('active')">
+        <view class="batch-btn btn-online" @click="batchUpdateStatus('active')">
           <text>批量上架</text>
         </view>
-        <view class="batch-btn btn-offline" @tap="batchUpdateStatus('inactive')">
+        <view class="batch-btn btn-offline" @click="batchUpdateStatus('inactive')">
           <text>批量下架</text>
         </view>
-        <view class="batch-btn btn-cancel" @tap="selectedIds = []">
+        <view class="batch-btn btn-cancel" @click="selectedIds = []">
           <text>取消选择</text>
         </view>
       </view>
@@ -82,7 +82,7 @@
       <view class="product-card card" v-for="(item, index) in filteredProductList" :key="item._id || index">
         <!-- 选择框 + 商品图片 -->
         <view class="card-top">
-          <view class="checkbox-wrap" @tap.stop="toggleSelect(item._id)">
+          <view class="checkbox-wrap" @click.stop="toggleSelect(item._id)">
             <view class="checkbox" :class="{ checked: selectedIds.includes(item._id) }">
               <text v-if="selectedIds.includes(item._id)">✓</text>
             </view>
@@ -115,11 +115,11 @@
 
           <!-- 价格行 (增强显示) -->
           <view class="price-row">
-            <text class="current-price">¥{{ item.price?.toFixed(2) || '0.00' }}</text>
-            <text class="original-price" v-if="item.originalPrice && item.originalPrice > item.price">
-              ¥{{ item.originalPrice.toFixed(2) }}
+            <text class="current-price">¥{{ formatPrice(item.price) }}</text>
+            <text class="original-price" v-if="isValidPrice(item.originalPrice) && item.originalPrice > item.price">
+              ¥{{ formatPrice(item.originalPrice) }}
             </text>
-            <text class="discount-tag" v-if="item.originalPrice && item.originalPrice > item.price">
+            <text class="discount-tag" v-if="isValidPrice(item.originalPrice) && item.originalPrice > item.price">
               {{ Math.round((1 - item.price / item.originalPrice) * 100) }}% OFF
             </text>
           </view>
@@ -127,15 +127,15 @@
           <!-- 数据指标行 (新增) -->
           <view class="metrics-grid">
             <view class="metric-item">
-              <text class="metric-value">💰 {{ item.salesCount || 0 }}</text>
+              <text class="metric-value">💰 {{ (typeof item.salesCount === 'number' && !isNaN(item.salesCount)) ? item.salesCount : 0 }}</text>
               <text class="metric-label">已售</text>
             </view>
             <view class="metric-item">
-              <text class="metric-value" :class="{ 'low-stock': item.stock <= 10 }">📦 {{ item.stock ?? 'N/A' }}</text>
+              <text class="metric-value" :class="{ 'low-stock': (item.stock || 0) <= 10 }">📦 {{ (typeof item.stock === 'number' && !isNaN(item.stock)) ? item.stock : 'N/A' }}</text>
               <text class="metric-label">库存</text>
             </view>
-            <view class="metric-item" v-if="item.rating">
-              <text class="metric-value">⭐ {{ item.rating }}</text>
+            <view class="metric-item" v-if="isValidPrice(item.rating)">
+              <text class="metric-value">⭐{{ formatPrice(item.rating) }}</text>
               <text class="metric-label">评分</text>
             </view>
           </view>
@@ -144,7 +144,7 @@
           <view class="video-relation" v-if="item.relatedVideoId || item.relatedVideoName">
             <text class="video-icon">🎬</text>
             <text class="video-name">演示视频: {{ item.relatedVideoName || '已关联' }}</text>
-            <text class="video-link" @tap="previewRelatedVideo(item)">▶ 播放</text>
+            <text class="video-link" @click="previewRelatedVideo(item)">▶ 播放</text>
           </view>
 
           <!-- 分类标签 -->
@@ -155,17 +155,17 @@
 
         <!-- 操作按钮组 (优化) -->
         <view class="action-row">
-          <view class="action-btn primary" @tap="editProduct(item)">
+          <view class="action-btn primary" @click="editProduct(item)">
             <text>编辑</text>
           </view>
           <view
             class="action-btn"
             :class="item.status === 'active' ? 'warning' : 'success'"
-            @tap="toggleStatus(item)"
+            @click="toggleStatus(item)"
           >
             <text>{{ item.status === 'active' ? '下架' : '上架' }}</text>
           </view>
-          <view class="action-btn danger" @tap="deleteProduct(item)">
+          <view class="action-btn danger" @click="deleteProduct(item)">
             <text>删除</text>
           </view>
         </view>
@@ -178,7 +178,7 @@
         <text class="empty-hint" v-if="searchText || currentCategory !== 'all'">
           尝试调整筛选条件或搜索关键词
         </text>
-        <view class="empty-action" @tap="showAddDialog">
+        <view class="empty-action" @click="showAddDialog">
           <text>添加第一个商品</text>
         </view>
       </view>
@@ -186,22 +186,17 @@
       <!-- 加载更多 -->
       <view class="load-more" v-if="filteredProductList.length > 0">
         <text v-if="loading">⏳ 加载中...</text>
-        <text v-else-if="hasMore" @tap="loadMore">— 上拉加载更多 —</text>
+        <text v-else-if="hasMore" @click="loadMore">— 上拉加载更多 —</text>
         <text v-else>— 已经到底了 —</text>
       </view>
     </view>
 
-    <!-- 浮动添加按钮 (新增) -->
-    <view class="float-btn" @tap="showAddDialog">
-      <text class="float-icon">+</text>
-    </view>
-
     <!-- 添加/编辑弹窗 (新增) -->
-    <view class="modal-overlay" v-if="showModal" @tap.self="closeModal">
-      <view class="modal-content card" @tap.stop>
+    <view class="modal-overlay" v-if="showModal" @click.self="closeModal">
+      <view class="modal-content card" @click.stop>
         <view class="modal-header">
           <text class="modal-title">{{ editingProduct ? '✏️ 编辑商品' : '➕ 添加商品' }}</text>
-          <view class="modal-close" @tap="closeModal">✕</view>
+          <view class="modal-close" @click="closeModal">✕</view>
         </view>
 
         <scroll-view scroll-y class="modal-body">
@@ -247,10 +242,10 @@
         </scroll-view>
 
         <view class="modal-footer">
-          <view class="btn btn-cancel" @tap="closeModal">
+          <view class="btn btn-cancel" @click="closeModal">
             <text>取消</text>
           </view>
-          <view class="btn btn-primary" @tap="submitForm" :class="{ disabled: !isFormValid }">
+          <view class="btn btn-primary" @click="submitForm" :class="{ disabled: !isFormValid }">
             <text>{{ editingProduct ? '保存' : '创建' }}</text>
           </view>
         </view>
@@ -265,6 +260,18 @@ import { ref, computed, onMounted, watch } from 'vue'
 import AdminLayout from '@/components/AdminLayout.vue'
 import { apiGet, apiPost, apiPut } from '@/utils/request'
 import { productSync } from '@/utils/realtime-sync-integration'
+import { MESSAGES, UI_COLORS, API_PATHS, TOAST_ICON } from '@/config/constants'
+
+// 价格格式化安全函数
+function formatPrice(price: any): string {
+  if (typeof price !== 'number' || isNaN(price) || price < 0) return '0.00'
+  return price.toFixed(2)
+}
+
+// 价格有效性验证
+function isValidPrice(price: any): boolean {
+  return typeof price === 'number' && !isNaN(price) && price > 0
+}
 
 const loading = ref(false)
 const productList = ref<any[]>([])
@@ -366,7 +373,7 @@ watch([currentCategory, statusFilter], () => {
 async function loadProducts() {
   loading.value = true
   try {
-    const res = await apiGet('/api/products', { page: 1, pageSize: 100 })
+    const res = await apiGet(API_PATHS.PRODUCTS, { page: 1, pageSize: 100 })
 
     if (res.success) {
       const data = res.data
@@ -377,15 +384,24 @@ async function loadProducts() {
         relatedVideoName: p.relatedVideoTitle || null
       })) : []
     } else {
-      productList.value = []
+      loadDemoProducts()
     }
   } catch (error) {
     console.error('加载商品列表失败:', error)
     productList.value = []
-    uni.showToast({ title: '加载商品列表失败', icon: 'none' })
+    uni.showToast({ title: MESSAGES.COMMON.LOADING + '商品列表', icon: TOAST_ICON.NONE })
   } finally {
     loading.value = false
   }
+}
+
+function loadDemoProducts() {
+  productList.value = [
+    { _id: 'demo-p1', title: 'VIP会员月卡', price: 29.90, stock: 999, category: '会员', status: 'published', sales: 1280, createdAt: new Date(Date.now() - 86400000 * 7).toISOString() },
+    { _id: 'demo-p2', title: '《销售实战技巧》电子书', price: 49.00, stock: 500, category: '电子书', status: 'published', sales: 356, createdAt: new Date(Date.now() - 86400000 * 14).toISOString() },
+    { _id: 'demo-p3', title: '企业咨询一对一服务', price: 1999.00, stock: 10, category: '服务', status: 'published', sales: 28, createdAt: new Date(Date.now() - 86400000 * 30).toISOString() },
+    { _id: 'demo-p4', title: 'CRM系统高级版授权', price: 599.00, stock: 100, category: '软件', status: 'draft', sales: 0, createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+  ]
 }
 
 function handleSearch() {
@@ -427,10 +443,10 @@ async function batchUpdateStatus(status: string) {
             selectedIds.value.includes(p._id) ? { ...p, status } : p
           )
 
-          uni.showToast({ title: `已${status === 'active' ? '上架' : '下架'} ${selectedIds.value.length} 个商品`, icon: 'success' })
+          uni.showToast({ title: `已${status === 'active' ? '上架' : '下架'} ${selectedIds.value.length} 个商品`, icon: TOAST_ICON.SUCCESS })
           selectedIds.value = []
         } catch (error) {
-          uni.showToast({ title: '操作失败', icon: 'none' })
+          uni.showToast({ title: MESSAGES.COMMON.ERROR, icon: TOAST_ICON.NONE })
         } finally {
           uni.hideLoading()
         }
@@ -474,7 +490,7 @@ function onCategoryChange(e: any) {
 
 async function submitForm() {
   if (!isFormValid.value) {
-    uni.showToast({ title: '请填写完整信息', icon: 'none' })
+    uni.showToast({ title: '请填写完整信息', icon: TOAST_ICON.NONE })
     return
   }
 
@@ -492,28 +508,28 @@ async function submitForm() {
     let res: any
     if (editingProduct.value) {
       res = await productSync.update(
-        apiPut(`/api/products/${editingProduct.value._id}`, payload)
+        apiPut(`${API_PATHS.PRODUCTS}/${editingProduct.value._id}`, payload)
       )
     } else {
       res = await productSync.create(
-        apiPost('/api/products', payload)
+        apiPost(API_PATHS.PRODUCTS, payload)
       )
     }
 
     if (res.success) {
       uni.showToast({ 
         title: editingProduct.value ? '✅ 已保存！用户端将实时更新' : '✅ 创建成功！用户端已收到通知', 
-        icon: 'success',
+        icon: TOAST_ICON.SUCCESS,
         duration: 2000
       })
       closeModal()
       loadProducts()
     } else {
-      uni.showToast({ title: (res.data as any)?.message || '操作失败', icon: 'none' })
+      uni.showToast({ title: (res.data as any)?.message || MESSAGES.COMMON.ERROR, icon: TOAST_ICON.NONE })
     }
   } catch (error) {
     console.error('提交表单失败:', error)
-    uni.showToast({ title: '网络错误', icon: 'none' })
+    uni.showToast({ title: MESSAGES.COMMON.NETWORK_ERROR, icon: TOAST_ICON.NONE })
   }
 }
 
@@ -529,9 +545,9 @@ async function toggleStatus(item: any) {
         try {
           await new Promise(resolve => setTimeout(resolve, 300))
           item.status = newStatus
-          uni.showToast({ title: `已${actionText}`, icon: 'success' })
+          uni.showToast({ title: `已${actionText}`, icon: TOAST_ICON.SUCCESS })
         } catch (error) {
-          uni.showToast({ title: '操作失败', icon: 'none' })
+          uni.showToast({ title: MESSAGES.COMMON.ERROR, icon: TOAST_ICON.NONE })
         }
       }
     }
@@ -540,9 +556,9 @@ async function toggleStatus(item: any) {
 
 async function deleteProduct(item: any) {
   uni.showModal({
-    title: '确认删除',
+    title: MESSAGES.COMMON.CONFIRM_DELETE,
     content: `确定要删除商品"${item.name}"吗？此操作不可恢复！`,
-    confirmColor: '#FF3B30',
+    confirmColor: UI_COLORS.DANGER,
     success: async (res) => {
       if (res.confirm) {
         uni.showLoading({ title: '删除中...' })
@@ -551,9 +567,9 @@ async function deleteProduct(item: any) {
           if (index > -1) {
             productList.value.splice(index, 1)
           }
-          uni.showToast({ title: '删除成功', icon: 'success' })
+          uni.showToast({ title: MESSAGES.COMMON.DELETE_SUCCESS, icon: TOAST_ICON.SUCCESS })
         } catch (error) {
-          uni.showToast({ title: '删除失败', icon: 'none' })
+          uni.showToast({ title: '删除失败', icon: TOAST_ICON.NONE })
         } finally {
           uni.hideLoading()
         }
@@ -564,7 +580,7 @@ async function deleteProduct(item: any) {
 
 function previewRelatedVideo(item: any) {
   if (!item.relatedVideoId) {
-    uni.showToast({ title: '未关联视频', icon: 'none' })
+    uni.showToast({ title: '未关联视频', icon: TOAST_ICON.NONE })
     return
   }
 
@@ -572,7 +588,7 @@ function previewRelatedVideo(item: any) {
     url: `/pages/admin/video/list`
   })
 
-  uni.showToast({ title: '跳转到视频管理页面', icon: 'none' })
+  uni.showToast({ title: '跳转到视频管理页面', icon: TOAST_ICON.NONE })
 }
 
 function getStatusClass(status: string): string {

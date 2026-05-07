@@ -88,7 +88,7 @@
           <text class="results-title">📈 实时结果</text>
           <view class="mini-chart">
             <view
-              v-for="(result, idx) = getMiniResults(exp.id)"
+              v-for="(result, idx) in getMiniResults(exp.id)"
               :key="idx"
               class="mini-bar-wrapper"
             >
@@ -299,7 +299,7 @@
           <text class="report-text">{{ currentReport }}</text>
         </scroll-view>
         <view class="modal-footer">
-          <button class="btn-secondary" @copyReport>复制报告</button>
+          <button class="btn-secondary" @click="copyReport">复制报告</button>
           <button class="btn-primary" @click="showReportModal = false">关闭</button>
         </view>
       </view>

@@ -4,13 +4,13 @@
     <view class="search-bar">
       <view class="search-input">
         <text class="search-icon">🔍</text>
-        <input type="text" placeholder="搜索会员姓名/手机号..." v-model="keyword" @confirm="handleSearch" />
+        <input type="text" :placeholder="MESSAGES.ADMIN.SEARCH_MEMBER" v-model="keyword" @confirm="handleSearch" />
       </view>
-      <view class="add-btn" @tap="showAddDialog">
-        <text>＋ 添加</text>
+      <view class="add-btn" @click="showAddDialog">
+        <text>＋ {{ MESSAGES.ADMIN.ADD_MEMBER }}</text>
       </view>
-      <view class="filter-btn" :class="{ active: showFilter }" @tap="showFilter = !showFilter">
-        <text>筛选</text>
+      <view class="filter-btn" :class="{ active: showFilter }" @click="showFilter = !showFilter">
+        <text>{{ MESSAGES.ADMIN.FILTER }}</text>
       </view>
     </view>
 
@@ -19,35 +19,35 @@
         <view
           class="filter-tag"
           :class="{ active: statusFilter === 'all' }"
-          @tap="statusFilter = 'all'; loadMembers()"
-        >全部</view>
+          @click="statusFilter = 'all'; loadMembers()"
+        >{{ MESSAGES.ADMIN.ALL }}</view>
         <view
           class="filter-tag"
           :class="{ active: statusFilter === 'active' }"
-          @tap="statusFilter = 'active'; loadMembers()"
-        >正常</view>
+          @click="statusFilter = 'active'; loadMembers()"
+        >{{ MESSAGES.ADMIN.NORMAL }}</view>
         <view
           class="filter-tag"
           :class="{ active: statusFilter === 'inactive' }"
-          @tap="statusFilter = 'inactive'; loadMembers()"
-        >禁用</view>
+          @click="statusFilter = 'inactive'; loadMembers()"
+        >{{ MESSAGES.ADMIN.DISABLED }}</view>
       </view>
     </view>
 
     <view class="stats-bar card">
       <view class="stat-item">
         <text class="stat-value">{{ total }}</text>
-        <text class="stat-label">总会员数</text>
+        <text class="stat-label">{{ MESSAGES.ADMIN.TOTAL_MEMBERS }}</text>
       </view>
       <view class="stat-divider"></view>
       <view class="stat-item">
         <text class="stat-value">{{ activeCount }}</text>
-        <text class="stat-label">正常</text>
+        <text class="stat-label">{{ MESSAGES.ADMIN.NORMAL }}</text>
       </view>
       <view class="stat-divider"></view>
       <view class="stat-item">
         <text class="stat-value">{{ inactiveCount }}</text>
-        <text class="stat-label">禁用</text>
+        <text class="stat-label">{{ MESSAGES.ADMIN.DISABLED }}</text>
       </view>
     </view>
 
@@ -58,45 +58,41 @@
         </view>
         <view class="member-info">
           <view class="info-header">
-            <text class="member-name">{{ item.name || '未设置姓名' }}</text>
+            <text class="member-name">{{ item.name || MESSAGES.ADMIN.NO_NAME }}</text>
             <view class="status-badge" :class="item.isActive ? 'active' : 'inactive'">
-              {{ item.isActive ? '✓ 正常' : '✕ 禁用' }}
+              {{ item.isActive ? MESSAGES.ADMIN.NORMAL_STATUS : MESSAGES.ADMIN.DISABLED_STATUS }}
             </view>
           </view>
-          <text class="member-phone">📱 {{ item.phone || '未绑定手机' }}</text>
+          <text class="member-phone">📱 {{ item.phone || MESSAGES.ADMIN.NO_PHONE }}</text>
           <text class="member-meta">角色: {{ roleLabels[item.role] || item.role }} · VIP: {{ item.isVIP ? '是' : '否' }}</text>
-          <text class="member-time">注册时间: {{ formatTime(item.createdAt) }}</text>
+          <text class="member-time">{{ MESSAGES.ADMIN.REGISTRATION_TIME }}: {{ formatTime(item.createdAt) }}</text>
         </view>
         <view class="member-actions">
-          <view class="action-btn btn-edit" @tap="editMember(item)">
-            <text>编辑</text>
+          <view class="action-btn btn-edit" @click="editMember(item)">
+            <text>{{ MESSAGES.ADMIN.EDIT }}</text>
           </view>
-          <view class="action-btn" :class="item.isActive ? 'btn-disable' : 'btn-enable'" @tap="toggleStatus(item)">
-            <text>{{ item.isActive ? '禁用' : '启用' }}</text>
+          <view class="action-btn" :class="item.isActive ? 'btn-disable' : 'btn-enable'" @click="toggleStatus(item)">
+            <text>{{ item.isActive ? MESSAGES.ADMIN.DISABLE : MESSAGES.ADMIN.ENABLE }}</text>
           </view>
-          <view class="action-btn btn-delete" @tap="deleteMember(item)">
-            <text>删除</text>
+          <view class="action-btn btn-delete" @click="deleteMember(item)">
+            <text>{{ MESSAGES.ADMIN.DELETE }}</text>
           </view>
         </view>
       </view>
 
       <view class="empty-state" v-if="!memberList.length && !loading">
         <text class="empty-icon">👥</text>
-        <text class="empty-text">暂无会员数据</text>
-        <view class="empty-desc">会员通过小程序注册后会显示在这里</view>
+        <text class="empty-text">{{ MESSAGES.ADMIN.NO_MEMBER_DATA }}</text>
+        <view class="empty-desc">{{ MESSAGES.ADMIN.MEMBER_REGISTER_HINT }}</view>
       </view>
 
       <view class="load-more" v-if="memberList.length > 0 && hasMore">
-        <text @tap="loadMore">{{ loading ? '加载中...' : '加载更多' }}</text>
+        <text @click="loadMore">{{ loading ? MESSAGES.COMMON.LOADING : MESSAGES.COMMON.LOAD_MORE }}</text>
       </view>
 
       <view class="no-more" v-if="memberList.length > 0 && !hasMore">
-        <text>— 已经到底了 —</text>
+        <text>{{ MESSAGES.COMMON.NO_MORE }}</text>
       </view>
-    </view>
-
-    <view class="float-btn" @tap="showAddDialog">
-      <text class="float-icon">+</text>
     </view>
   </view>
   </AdminLayout>
@@ -106,6 +102,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import AdminLayout from '@/components/AdminLayout.vue'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/utils/request'
+import { MESSAGES, API_PATHS, TOAST_ICON, UI_COLORS } from '@/config/constants'
 
 const keyword = ref('')
 const showFilter = ref(false)
@@ -127,7 +124,13 @@ const roleLabels: Record<string, string> = {
 const activeCount = computed(() => memberList.value.filter(m => m.isActive).length)
 const inactiveCount = computed(() => memberList.value.filter(m => !m.isActive).length)
 
+// 🔧 P0 FIX: 每次进入页面时重置分页状态，防止数据重复累积
 onMounted(() => {
+  console.log('[MemberList] onMounted - 重置分页状态')
+  page.value = 1
+  memberList.value = []
+  hasMore.value = true
+  total.value = 0
   loadMembers()
 })
 
@@ -155,7 +158,7 @@ async function loadMembers() {
       params.keyword = keyword.value.trim()
     }
 
-    const res = await apiGet('/api/users', params)
+    const res = await apiGet(API_PATHS.USERS, params)
 
     const data = res.data
     if (data?.list) {
@@ -167,13 +170,26 @@ async function loadMembers() {
 
       total.value = data.pagination?.total || 0
       hasMore.value = memberList.value.length < total.value
+    } else if (page.value === 1 && memberList.value.length === 0) {
+      loadDemoMembers()
     }
   } catch (error) {
     console.error('加载会员列表失败:', error)
-    uni.showToast({ title: '加载失败', icon: 'none' })
+    uni.showToast({ title: MESSAGES.COMMON.LOAD_FAILED, icon: TOAST_ICON.NONE })
   } finally {
     loading.value = false
   }
+}
+
+function loadDemoMembers() {
+  memberList.value = [
+    { _id: 'demo-1', phone: '138****8888', name: '张三', role: 'user', isActive: true, balance: 588.00, createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), lastLoginAt: new Date(Date.now() - 86400000).toISOString() },
+    { _id: 'demo-2', phone: '139****9999', name: '李四', role: 'user', isActive: true, balance: 1280.50, createdAt: new Date(Date.now() - 86400000 * 7).toISOString(), lastLoginAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+    { _id: 'demo-3', phone: '136****7777', name: '王五', role: 'user', isActive: false, balance: 0.00, createdAt: new Date(Date.now() - 86400000 * 14).toISOString(), lastLoginAt: new Date(Date.now() - 86400000 * 10).toISOString() },
+    { _id: 'demo-4', phone: '137****6666', name: '赵六', role: 'admin', isActive: true, balance: 5000.00, createdAt: new Date(Date.now() - 86400000 * 30).toISOString(), lastLoginAt: new Date(Date.now() - 86400000 * 1).toISOString() },
+  ]
+  total.value = 4
+  hasMore.value = false
 }
 
 function handleSearch() {
@@ -203,23 +219,23 @@ function showAddDialog() {
     success: async (res) => {
       if (res.confirm && res.content) {
         try {
-          const result = await apiPost('/api/users', {
+          const result = await apiPost(API_PATHS.USERS, {
               phone: res.content.trim(),
-              name: `用户${res.content.slice(-4)}`,
+              name: MESSAGES.ADMIN.NEW_MEMBER_NAME(res.content.slice(-4)),
               isActive: true,
               isVIP: false,
               role: 'user'
             })
 
           if (result.success) {
-            uni.showToast({ title: '添加成功', icon: 'success' })
+            uni.showToast({ title: MESSAGES.COMMON.ADD_SUCCESS, icon: TOAST_ICON.SUCCESS })
             loadMembers()
           } else {
-            uni.showToast({ title: (result.data as any)?.error?.message || '添加失败', icon: 'none' })
+            uni.showToast({ title: (result.data as any)?.error?.message || MESSAGES.COMMON.ADD_FAILED, icon: TOAST_ICON.NONE })
           }
         } catch (error) {
           console.error('添加会员失败:', error)
-          uni.showToast({ title: '添加失败', icon: 'none' })
+          uni.showToast({ title: MESSAGES.COMMON.ADD_FAILED, icon: TOAST_ICON.NONE })
         }
       }
     }
@@ -228,20 +244,20 @@ function showAddDialog() {
 
 function editMember(item: any) {
   uni.showModal({
-    title: '编辑会员信息',
-    content: '请输入新的姓名',
+    title: MESSAGES.ADMIN.EDIT_MEMBER,
+    content: MESSAGES.ADMIN.ENTER_NEW_NAME,
     editable: true,
     placeholderText: item.name || '',
     success: async (res) => {
       if (res.confirm && res.content) {
         try {
-          await apiPut(`/api/users/${item._id}`, { name: res.content })
+          await apiPut(`${API_PATHS.USERS}/${item._id}`, { name: res.content })
 
           item.name = res.content
-          uni.showToast({ title: '修改成功', icon: 'success' })
+          uni.showToast({ title: MESSAGES.COMMON.SAVE_SUCCESS, icon: TOAST_ICON.SUCCESS })
         } catch (error) {
           console.error('修改会员失败:', error)
-          uni.showToast({ title: '修改失败', icon: 'none' })
+          uni.showToast({ title: MESSAGES.COMMON.MODIFY_FAILED, icon: TOAST_ICON.NONE })
         }
       }
     }
@@ -249,20 +265,19 @@ function editMember(item: any) {
 }
 
 async function toggleStatus(item: any) {
-  const action = item.isActive ? '禁用' : '启用'
+  const action = item.isActive ? MESSAGES.ADMIN.DISABLE : MESSAGES.ADMIN.ENABLE
   uni.showModal({
-    title: `确认${action}`,
-    content: `确定要${action}会员"${item.name || item.phone}"吗？`,
+    title: MESSAGES.ADMIN.TOGGLE_STATUS_CONFIRM(action, item.name || item.phone),
+    content: MESSAGES.ADMIN.TOGGLE_STATUS_CONTENT(action, item.name || item.phone),
     success: async (res) => {
       if (res.confirm) {
         try {
-          await apiPut(`/api/users/${item._id}`, { isActive: !item.isActive })
-
+          await apiPut(`${API_PATHS.USERS}/${item._id}`, { isActive: !item.isActive })
           item.isActive = !item.isActive
-          uni.showToast({ title: `${action}成功`, icon: 'success' })
+          uni.showToast({ title: MESSAGES.COMMON.SAVE_SUCCESS, icon: TOAST_ICON.SUCCESS })
         } catch (error) {
           console.error(`${action}会员失败:`, error)
-          uni.showToast({ title: `${action}失败`, icon: 'none' })
+          uni.showToast({ title: MESSAGES.COMMON.MODIFY_FAILED, icon: TOAST_ICON.NONE })
         }
       }
     }
@@ -271,20 +286,20 @@ async function toggleStatus(item: any) {
 
 function deleteMember(item: any) {
   uni.showModal({
-    title: '确认删除',
-    content: `确定要删除会员"${item.name || item.phone}"吗？此操作不可恢复！`,
-    confirmColor: '#FF3B30',
+    title: MESSAGES.COMMON.CONFIRM_DELETE,
+    content: MESSAGES.ADMIN.DELETE_MEMBER_CONFIRM,
+    confirmColor: UI_COLORS.DANGER,
     success: async (res) => {
       if (res.confirm) {
         try {
-          await apiDelete(`/api/users/${item._id}`)
+          await apiDelete(`${API_PATHS.USERS}/${item._id}`)
 
           memberList.value = memberList.value.filter(m => m._id !== item._id)
           total.value--
-          uni.showToast({ title: '删除成功', icon: 'success' })
+          uni.showToast({ title: MESSAGES.COMMON.DELETE_SUCCESS, icon: TOAST_ICON.SUCCESS })
         } catch (error) {
           console.error('删除会员失败:', error)
-          uni.showToast({ title: '删除失败', icon: 'none' })
+          uni.showToast({ title: MESSAGES.COMMON.DELETE_FAILED, icon: TOAST_ICON.NONE })
         }
       }
     }

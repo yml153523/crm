@@ -7,7 +7,7 @@
         :class="{ active: activeTab === item.key }"
         v-for="(item, index) in tabs" 
         :key="index"
-        @tap="activeTab = item.key"
+        @click="activeTab = item.key"
       >
         <text class="tab-icon">{{ item.icon }}</text>
         <text class="tab-label">{{ item.label }}</text>
@@ -21,7 +21,7 @@
     <view class="content" v-if="activeTab === 'redPacket'">
       <view class="section-header">
         <text class="section-title">🧧 红包提醒</text>
-        <view class="batch-btn" @tap="sendBatchRemind('redPacket')">
+        <view class="batch-btn" @click="sendBatchRemind('redPacket')">
           <text>批量发送</text>
         </view>
       </view>
@@ -43,7 +43,7 @@
             <view 
               class="send-btn"
               :class="{ sending: sendingId === user._id }"
-              @tap="sendRemind(user._id, 'redPacket')"
+              @click="sendRemind(user._id, 'redPacket')"
             >
               <text>{{ sendingId === user._id ? '发送中...' : '发送' }}</text>
             </view>
@@ -61,7 +61,7 @@
     <view class="content" v-if="activeTab === 'classReminder'">
       <view class="section-header">
         <text class="section-title">📚 上课提醒</text>
-        <view class="batch-btn" @tap="sendBatchRemind('classReminder')">
+        <view class="batch-btn" @click="sendBatchRemind('classReminder')">
           <text>批量发送</text>
         </view>
       </view>
@@ -80,7 +80,7 @@
             <view 
               class="send-btn btn-purple"
               :class="{ sending: sendingId === user._id }"
-              @tap="sendRemind(user._id, 'classReminder')"
+              @click="sendRemind(user._id, 'classReminder')"
             >
               <text>{{ sendingId === user._id ? '发送中...' : '发送' }}</text>
             </view>
@@ -98,7 +98,7 @@
     <view class="content" v-if="activeTab === 'recommendation'">
       <view class="section-header">
         <text class="section-title">⭐ 推荐内容管理</text>
-        <view class="batch-btn" @tap="showAddRecommendation" style="background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%);">
+        <view class="batch-btn" @click="showAddRecommendation" style="background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%);">
           <text>+ 添加推荐</text>
         </view>
       </view>
@@ -149,20 +149,20 @@
           <view class="rec-actions">
             <view
               class="action-btn btn-edit"
-              @tap="editRecommendation(item)"
+              @click="editRecommendation(item)"
             >
               <text>编辑</text>
             </view>
             <view
               class="action-btn"
               :class="item.status === 'active' ? 'btn-disable' : 'btn-enable'"
-              @tap="toggleRecommendStatus(item)"
+              @click="toggleRecommendStatus(item)"
             >
               <text>{{ item.status === 'active' ? '下架' : '上架' }}</text>
             </view>
             <view
               class="action-btn btn-delete"
-              @tap="deleteRecommendation(item._id)"
+              @click="deleteRecommendation(item._id)"
             >
               <text>删除</text>
             </view>
@@ -181,7 +181,7 @@
     <view class="content" v-if="activeTab === 'history'">
       <view class="section-header">
         <text class="section-title">📋 发送记录</text>
-        <view class="filter-tag" @tap="showHistoryFilter = !showHistoryFilter">
+        <view class="filter-tag" @click="showHistoryFilter = !showHistoryFilter">
           <text>筛选 ▼</text>
         </view>
       </view>
@@ -191,17 +191,17 @@
           <view 
             class="filter-option"
             :class="{ active: historyType === 'all' }"
-            @tap="historyType = 'all'"
+            @click="historyType = 'all'"
           >全部</view>
           <view 
             class="filter-option"
             :class="{ active: historyType === 'redPacket' }"
-            @tap="historyType = 'redPacket'"
+            @click="historyType = 'redPacket'"
           >红包</view>
           <view 
             class="filter-option"
             :class="{ active: historyType === 'classReminder' }"
-            @tap="historyType = 'classReminder'"
+            @click="historyType = 'classReminder'"
           >上课</view>
         </view>
       </view>
@@ -232,6 +232,7 @@
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from '@/components/AdminLayout.vue'
 import { remindAPI } from '@/api/remind'
@@ -513,8 +514,8 @@ async function saveRecommendation() {
 
     if (res.success) {
       uni.showToast({ 
-        title: editingRec.value ? '✅ 已更新！用户端将实时显示' : '✅ 创建成功！用户端已收到通知', 
-        icon: 'success',
+        title: editingRec.value ? MESSAGES.ADMIN.REMIND_UPDATED : MESSAGES.ADMIN.REMIND_CREATED, 
+        icon: TOAST_ICON.SUCCESS,
         duration: 2000
       })
       showRecForm.value = false
@@ -540,7 +541,7 @@ async function saveRecommendation() {
       }
       recommendationList.value.unshift(newRec)
     }
-    uni.showToast({ title: '保存成功（本地）✅', icon: 'success' })
+    uni.showToast({ title: '保存成功（本地）✅', icon: TOAST_ICON.SUCCESS })
     showRecForm.value = false
     tabs.value[2].count = recommendationList.value.filter((r: any) => r.status === 'active').length
   } finally {
@@ -564,7 +565,7 @@ async function toggleRecommendStatus(item: any) {
             tabs.value[2].count = recommendationList.value.filter((r: any) => r.status === 'active').length
             uni.showToast({
               title: `${newStatus === 'active' ? '上架' : '下架'}成功 ✅`,
-              icon: 'success'
+              icon: TOAST_ICON.SUCCESS
             })
           }
         } catch (error) {
@@ -573,7 +574,7 @@ async function toggleRecommendStatus(item: any) {
           tabs.value[2].count = recommendationList.value.filter((r: any) => r.status === 'active').length
           uni.showToast({
             title: `${newStatus === 'active' ? '上架' : '下架'}成功（本地）✅`,
-            icon: 'success'
+            icon: TOAST_ICON.SUCCESS
           })
         }
       }
@@ -583,7 +584,7 @@ async function toggleRecommendStatus(item: any) {
 
 async function deleteRecommendation(id: string) {
   uni.showModal({
-    title: '确认删除',
+    title: MESSAGES.COMMON.CONFIRM_DELETE,
     content: '确定要删除该推荐内容吗？此操作不可恢复，用户端将同步移除。',
     confirmColor: '#FF3B30',
     success: async (res) => {
@@ -596,13 +597,13 @@ async function deleteRecommendation(id: string) {
           if (result.success) {
             recommendationList.value = recommendationList.value.filter((r: any) => r._id !== id)
             tabs.value[2].count = recommendationList.value.filter((r: any) => r.status === 'active').length
-            uni.showToast({ title: '✅ 已删除！用户端将同步移除', icon: 'success', duration: 2000 })
+            uni.showToast({ title: '✅ 已删除！用户端将同步移除', icon: TOAST_ICON.SUCCESS, duration: 2000 })
           }
         } catch (error) {
           // 本地删除
           recommendationList.value = recommendationList.value.filter((r: any) => r._id !== id)
           tabs.value[2].count = recommendationList.value.filter((r: any) => r.status === 'active').length
-          uni.showToast({ title: '删除成功（本地）✅', icon: 'success' })
+          uni.showToast({ title: MESSAGES.COMMON.DELETE_SUCCESS_LOCAL, icon: TOAST_ICON.SUCCESS })
         }
       }
     }
@@ -654,7 +655,7 @@ async function sendRemind(userId: string, type: string) {
   try {
     const res: any = await remindAPI.sendRemind({ userId, type })
     if (res.success) {
-      uni.showToast({ title: '发送成功 ✅', icon: 'success' })
+      uni.showToast({ title: '发送成功 ✅', icon: TOAST_ICON.SUCCESS })
       await loadRemindHistory()
       
       if (activeTab.value !== 'history') {
@@ -702,7 +703,7 @@ async function sendBatchRemind(type: string) {
 
             uni.showToast({
               title: `✅ 已发送 ${users.length} 条提醒`,
-              icon: 'success',
+              icon: TOAST_ICON.SUCCESS,
               duration: 2000
             })
 
@@ -727,7 +728,7 @@ async function sendBatchRemind(type: string) {
           if (result.success) {
             uni.showToast({
               title: `已发送 ${result.data?.count || users.length} 条`,
-              icon: 'success',
+              icon: TOAST_ICON.SUCCESS,
               duration: 2000
             })
 

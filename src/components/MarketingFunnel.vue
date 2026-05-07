@@ -9,7 +9,7 @@
           :class="{ active: timeRange === range }"
           v-for="range in timeRanges"
           :key="range"
-          @tap="timeRange = range; loadData()"
+          @click="timeRange = range; loadData()"
         >
           {{ getRangeLabel(range) }}
         </view>
@@ -24,7 +24,7 @@
         :key="stage.name"
         :style="{ width: getStageWidth(index) }"
         :class="{ 'stage-highlight': index === highlightedStage }"
-        @tap="highlightedStage = index"
+        @click="highlightedStage = index"
       >
         <!-- 阶段标签 -->
         <view class="stage-label">
@@ -121,7 +121,7 @@
             <text class="suggestion-title">{{ sug.title }}</text>
             <text class="suggestion-desc">{{ sug.description }}</text>
           </view>
-          <view class="suggestion-action" @tap="applySuggestion(sug)">
+          <view class="suggestion-action" @click="applySuggestion(sug)">
             <text>应用</text>
           </view>
         </view>

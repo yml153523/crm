@@ -9,6 +9,8 @@
  */
 
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { getToken } from './auth'
+import { TOAST_ICON } from '@/config/constants'
 
 // WebSocket连接状态
 export const wsState = reactive({
@@ -22,7 +24,16 @@ let wsInstance: WebSocket | null = null
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
 // 配置
-const WS_URL = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.hostname}:5011/ws?type=user`
+function getWsUrl() {
+  const token = getToken()
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const baseUrl = `${protocol}//${location.hostname}:5011/ws?type=user`
+  if (token && !token.startsWith('demo-')) {
+    return `${baseUrl}&token=${encodeURIComponent(token)}`
+  }
+  return baseUrl
+}
+const WS_URL = getWsUrl()
 const RECONNECT_INTERVAL = 3000  // 用户端重连间隔更短（3秒）
 const MAX_RECONNECT_ATTEMPTS = 20  // 最大重连次数更多
 
@@ -56,9 +67,10 @@ export function initUserWebSocket() {
 
   try {
     wsState.connecting = true
-    console.log('[UserWS] Connecting to:', WS_URL)
+    const currentWsUrl = getWsUrl()
+    console.log('[UserWS] Connecting to:', currentWsUrl)
     
-    wsInstance = new WebSocket(WS_URL)
+    wsInstance = new WebSocket(currentWsUrl)
     
     wsInstance.onopen = () => {
       console.log('[UserWS] Connected successfully')
@@ -69,15 +81,14 @@ export function initUserWebSocket() {
       // 订阅所有频道（接收所有类型的事件）
       subscribe('*')  // 订阅全部
       
-      // 发送用户身份信息
-      send({
-        type: 'user:identify',
-        data: { 
-          role: 'user',
-          timestamp: Date.now(),
-          userAgent: navigator.userAgent
-        }
-      })
+      // 发送用户认证信息（用于WebSocket userId绑定）
+      const authToken = getToken()
+      if (authToken && !authToken.startsWith('demo-')) {
+        send({
+          type: 'user:auth',
+          token: authToken
+        })
+      }
       
       // 显示连接成功提示
       uni.showToast({ title: '实时同步已连接', icon: 'success', duration: 1500 })
@@ -270,12 +281,21 @@ function showUserNotification(eventType: string, payload: any) {
       icon = 'none'
       break
       
+    // 提醒通知（红包、上课等）
+    case 'remind':
+      message = `🔔 ${payload.title || '新提醒'}`
+      if (payload.content) {
+        message += `: ${payload.content}`
+      }
+      icon = 'none'
+      break
+      
     default:
       message = `收到更新: ${eventType}`
   }
   
   if (message) {
-    uni.showToast({ title: message, icon: icon as any, duration: 2500 })
+    uni.showToast({ title: message, icon: TOAST_ICON.NONE, duration: 2500 })
   }
 }
 

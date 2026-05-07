@@ -17,7 +17,7 @@
           v-for="channel in channels"
           :key="channel.id"
           :class="['channel-tab', { active: selectedChannel === channel.id }]"
-          @tap="selectChannel(channel.id)"
+          @click="selectChannel(channel.id)"
         >
           <text>{{ channel.icon }} {{ channel.label }}</text>
         </view>
@@ -25,7 +25,7 @@
 
       <button
         :class="['toggle-btn', { active: isSimulating }]"
-        @tap="toggleSimulation"
+        @click="toggleSimulation"
       >
         {{ isSimulating ? '⏹ 停止模拟' : '▶ 开始模拟' }}
       </button>
@@ -93,7 +93,7 @@
         v-for="metric in otherMetrics"
         :key="metric.id"
         class="metric-tile"
-        @tap="selectChannel(metric.id)"
+        @click="selectChannel(metric.id)"
       >
         <view class="tile-header">
           <text class="tile-icon">{{ metric.icon }}</text>

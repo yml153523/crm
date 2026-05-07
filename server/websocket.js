@@ -66,6 +66,9 @@ const stats = {
   startTime: Date.now()
 }
 
+// 存储WSS实例（供其他模块使用）
+let _wss = null
+
 /**
  * 创建WebSocket服务器并附加到HTTP服务器
  */
@@ -75,7 +78,7 @@ function createWSServer(httpServer) {
     path: '/ws',  // WebSocket路径
     perMessageDeflate: {  // 压缩配置
       zlibDeflateOptions: {
-        level: 6  // 压缩级别
+        level:6
       }
     }
   })
@@ -90,7 +93,13 @@ function createWSServer(httpServer) {
   
   console.log(`[WebSocket] Server started at /ws`)
   
+  _wss = wss
+  
   return wss
+}
+
+function getWSS() {
+  return _wss
 }
 
 /**
@@ -98,15 +107,32 @@ function createWSServer(httpServer) {
  */
 function handleConnection(ws, req) {
   const parsedUrl = url.parse(req.url, true)
-  const clientType = parsedUrl.query.type || 'user'  // 默认为用户端
+  const clientType = parsedUrl.query.type || 'user'
   const clientId = generateClientId()
-  
+  let userId = null
+
   // 设置客户端属性
   ws.clientId = clientId
   ws.clientType = clientType
   ws.isAlive = true
   ws.connectTime = Date.now()
-  
+  ws.userId = null  // 初始化为null，等待认证
+
+  // 如果URL中有token参数，尝试解析userId (用于用户端)
+  if (parsedUrl.query.token) {
+    try {
+      const jwt = require('jsonwebtoken')
+      const JWT_SECRET = process.env.JWT_SECRET || 'crm-secret-key-2026'
+      const decoded = jwt.verify(parsedUrl.query.token, JWT_SECRET)
+      if (decoded && decoded.id) {
+        ws.userId = decoded.id.toString()
+        console.log(`[WebSocket] User authenticated: ${ws.userId}`)
+      }
+    } catch (e) {
+      console.warn('[WebSocket] Token解析失败:', e.message)
+    }
+  }
+
   // 注册客户端
   if (clientType === 'admin') {
     clients.admin.add(ws)
@@ -173,6 +199,26 @@ function handleMessage(ws, message) {
           ws.channels.push(data.channel)
         }
         console.log(`[WebSocket] User ${ws.clientId} subscribed to: ${data.channel}`)
+        break
+
+      case 'user:auth':
+        // 用户发送认证信息 (连接后异步认证)
+        if (data.token) {
+          try {
+            const jwt = require('jsonwebtoken')
+            const JWT_SECRET = process.env.JWT_SECRET || 'crm-secret-key-2026'
+            const decoded = jwt.verify(data.token, JWT_SECRET)
+            if (decoded && decoded.id) {
+              ws.userId = decoded.id.toString()
+              sendToClient(ws, { type: 'auth:success', data: { userId: ws.userId } })
+              console.log(`[WebSocket] User authenticated via message: ${ws.userId}`)
+            } else {
+              sendToClient(ws, { type: 'auth:failed', data: { error: 'Invalid token' } })
+            }
+          } catch (e) {
+            sendToClient(ws, { type: 'auth:failed', data: { error: e.message } })
+          }
+        }
         break
         
       default:
@@ -345,6 +391,8 @@ function generateEventId() {
 module.exports = {
   EVENT_TYPES,
   createWSServer,
+  getWSS,
+  get wss() { return _wss },
   broadcastToUsers,
   broadcastToAdmins,
   broadcastAll,

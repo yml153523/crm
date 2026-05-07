@@ -9,11 +9,11 @@
       <view 
         class="video-card card" 
         v-for="(item, index) in videoList" 
-        :key="index" 
-        @tap="playVideo(item)"
+        :key="item._id || index" 
+        @click="playVideo(item)"
       >
         <view class="cover-wrapper">
-          <image :src="item.cover || '/static/images/placeholder.png'" mode="aspectFill" class="video-cover" />
+          <image :src="item.cover || '/static/images/placeholder.png'" mode="aspectFill" class="video-cover" lazy-load />
           <view class="play-overlay">
             <text class="play-icon">▶️</text>
           </view>

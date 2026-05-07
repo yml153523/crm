@@ -12,7 +12,7 @@
       </view>
 
       <!-- 排序模式切换 (新增) -->
-      <view class="sort-mode-toggle" @tap="toggleSortMode">
+      <view class="sort-mode-toggle" @click="toggleSortMode">
         <text class="toggle-icon">{{ isSortMode ? '✋' : '☰' }}</text>
         <text class="toggle-text">{{ isSortMode ? '退出排序' : '拖拽排序' }}</text>
       </view>
@@ -40,14 +40,14 @@
         <view
           class="filter-chip"
           :class="{ active: showFilters }"
-          @tap="showFilters = !showFilters"
+          @click="showFilters = !showFilters"
         >
           <text>筛选 ▼</text>
         </view>
 
         <view
           class="filter-chip export-btn"
-          @tap="showExportMenu"
+          @click="showExportMenu"
         >
           <text>📥 导出</text>
         </view>
@@ -55,7 +55,7 @@
         <view
           class="filter-chip"
           :class="{ active: viewMode === 'grid' }"
-          @tap="viewMode = viewMode === 'list' ? 'grid' : 'list'"
+          @click="viewMode = viewMode === 'list' ? 'grid' : 'list'"
         >
           <text>{{ viewMode === 'grid' ? '⊞' : '☰' }}</text>
         </view>
@@ -70,14 +70,14 @@
           <view
             class="chip"
             :class="{ active: currentCategory === 'all' }"
-            @tap="currentCategory = 'all'; applyFilters()"
+            @click="currentCategory = 'all'; applyFilters()"
           >全部</view>
           <view
             class="chip"
             :class="{ active: currentCategory === cat }"
             v-for="cat in categories"
             :key="cat"
-            @tap="currentCategory = cat; applyFilters()"
+            @click="currentCategory = cat; applyFilters()"
           >{{ cat }}</view>
         </scroll-view>
       </view>
@@ -88,14 +88,14 @@
           <view
             class="chip"
             :class="{ active: currentStatus === 'all' }"
-            @tap="currentStatus = 'all'; applyFilters()"
+            @click="currentStatus = 'all'; applyFilters()"
           >全部</view>
           <view
             class="chip"
             :class="{ active: currentStatus === status.value }"
             v-for="status in statusOptions"
             :key="status.value"
-            @tap="currentStatus = status.value; applyFilters()"
+            @click="currentStatus = status.value; applyFilters()"
           >{{ status.label }}</view>
         </scroll-view>
       </view>
@@ -106,14 +106,14 @@
           <view
             class="chip"
             :class="{ active: marketingFilter === 'all' }"
-            @tap="marketingFilter = 'all'; applyFilters()"
+            @click="marketingFilter = 'all'; applyFilters()"
           >全部</view>
           <view
             class="chip chip-marketing"
             :class="{ active: marketingFilter === type.value }"
             v-for="type in marketingTypes"
             :key="type.value"
-            @tap="marketingFilter = type.value; applyFilters()"
+            @click="marketingFilter = type.value; applyFilters()"
           >{{ type.icon }} {{ type.label }}</view>
         </scroll-view>
       </view>
@@ -123,16 +123,16 @@
     <view class="batch-toolbar" v-if="selectedIds.length > 0">
       <text class="selected-count">已选 {{ selectedIds.length }} 项</text>
       <view class="batch-actions">
-        <view class="batch-btn btn-publish" @tap="batchUpdateStatus('published')">
+        <view class="batch-btn btn-publish" @click="batchUpdateStatus('published')">
           <text>批量发布</text>
         </view>
-        <view class="batch-btn btn-draft" @tap="batchUpdateStatus('draft')">
+        <view class="batch-btn btn-draft" @click="batchUpdateStatus('draft')">
           <text>批量草稿</text>
         </view>
-        <view class="batch-btn btn-delete" @tap="batchDelete">
+        <view class="batch-btn btn-delete" @click="batchDelete">
           <text>批量删除</text>
         </view>
-        <view class="batch-btn btn-cancel" @tap="selectedIds = []">
+        <view class="batch-btn btn-cancel" @click="selectedIds = []">
           <text>取消选择</text>
         </view>
       </view>
@@ -158,14 +158,14 @@
         </view>
 
         <!-- 选择框 (新增) -->
-        <view class="checkbox-wrap" @tap.stop="toggleSelect(item._id)">
+        <view class="checkbox-wrap" @click.stop="toggleSelect(item._id)">
           <view class="checkbox" :class="{ checked: selectedIds.includes(item._id) }">
             <text v-if="selectedIds.includes(item._id)">✓</text>
           </view>
         </view>
 
         <!-- 缩略图区域 -->
-        <view class="thumb-section" @tap="previewVideo(item)">
+        <view class="thumb-section" @click="previewVideo(item)">
           <image
             :src="item.cover || '/static/images/placeholder.png'"
             mode="aspectFill"
@@ -243,13 +243,13 @@
 
         <!-- 操作按钮组 (优化) -->
         <view class="action-row">
-          <view class="action-btn primary" @tap="editVideo(item)">
+          <view class="action-btn primary" @click="editVideo(item)">
             <text>编辑</text>
           </view>
-          <view class="action-btn marketing" @tap="toggleMarketing(item)" v-if="!item.isMarketing">
+          <view class="action-btn marketing" @click="toggleMarketing(item)" v-if="!item.isMarketing">
             <text>设为营销</text>
           </view>
-          <view class="action-btn danger" @tap="deleteVideo(item)">
+          <view class="action-btn danger" @click="deleteVideo(item)">
             <text>删除</text>
           </view>
         </view>
@@ -262,7 +262,7 @@
         <text class="empty-hint" v-if="searchText || currentCategory !== 'all'">
           尝试调整筛选条件
         </text>
-        <view class="empty-action" @tap="goUpload">
+        <view class="empty-action" @click="goUpload">
           <text>上传第一个视频</text>
         </view>
       </view>
@@ -270,22 +270,22 @@
       <!-- 加载更多 -->
       <view class="load-more" v-if="filteredVideoList.length > 0">
         <text v-if="loading">⏳ 加载中...</text>
-        <text v-else-if="hasMore" @tap="loadMore">— 上拉加载更多 —</text>
+        <text v-else-if="hasMore" @click="loadMore">— 上拉加载更多 —</text>
         <text v-else>— 已经到底了 —</text>
       </view>
     </view>
 
     <!-- 浮动上传按钮 -->
-    <view class="float-btn" @tap="goUpload">
+    <view class="float-btn" @click="goUpload">
       <text class="float-icon">+</text>
     </view>
 
     <!-- 编辑弹窗 (增强版 - 新增营销配置) -->
-    <view class="modal-overlay" v-if="showEditModal" @tap.self="showEditModal = false">
+    <view class="modal-overlay" v-if="showEditModal" @click.self="showEditModal = false">
       <view class="modal-content card">
         <view class="modal-header">
           <text class="modal-title">✏️ 编辑视频</text>
-          <view class="modal-close" @tap="showEditModal = false">✕</view>
+          <view class="modal-close" @click="showEditModal = false">✕</view>
         </view>
 
         <scroll-view scroll-y class="modal-body">
@@ -321,7 +321,7 @@
             <text class="section-title">🎯 营销配置</text>
             <view class="form-group toggle-group">
               <text class="form-label">设为营销视频</text>
-              <view class="toggle-switch" :class="{ on: editForm.isMarketing }" @tap="editForm.isMarketing = !editForm.isMarketing">
+              <view class="toggle-switch" :class="{ on: editForm.isMarketing }" @click="editForm.isMarketing = !editForm.isMarketing">
                 <view class="toggle-knob"></view>
               </view>
             </view>
@@ -360,10 +360,10 @@
         </scroll-view>
 
         <view class="modal-footer">
-          <view class="btn btn-cancel" @tap="showEditModal = false">
+          <view class="btn btn-cancel" @click="showEditModal = false">
             <text>取消</text>
           </view>
-          <view class="btn btn-primary" @tap="saveEdit">
+          <view class="btn btn-primary" @click="saveEdit">
             <text>保存修改</text>
           </view>
         </view>
@@ -374,6 +374,7 @@
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import AdminLayout from '@/components/AdminLayout.vue'
 import { exportData, videoExportConfig, undoManager } from '@/utils/exportUtils'
@@ -480,7 +481,7 @@ onUnmounted(() => {
 })
 
 watch([currentCategory, currentStatus, marketingFilter], () => {
-  // 筛选条件变化时自动应用（已在chip的@tap中调用applyFilters）
+  // 筛选条件变化时自动应用（已在chip的@click调用applyFilters）
 })
 
 async function loadVideoList() {
@@ -861,7 +862,7 @@ async function uploadVideoToServer(fileOrPath: any, title: string) {
       const xhr = new XMLHttpRequest()
       xhr.open('POST', '/api/videos/upload')
       xhr.onload = () => resolve({ status: xhr.status, data: xhr.responseText })
-      xhr.onerror = () => reject(new Error('网络错误'))
+      xhr.onerror = () => reject(new Error(MESSAGES.COMMON.NETWORK_ERROR_SHORT))
       xhr.send(formData)
     })
 
@@ -1019,7 +1020,7 @@ async function saveEdit() {
 
 async function deleteVideo(item: any) {
   uni.showModal({
-    title: '确认删除',
+    title: MESSAGES.COMMON.CONFIRM_DELETE,
     content: `确定要删除视频"${item.title}"吗？\n此操作可在3秒内撤销。`,
     confirmColor: '#FF3B30',
     success: async (res) => {

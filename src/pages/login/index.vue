@@ -25,7 +25,7 @@
         class="btn-primary" 
         :class="{ disabled: loading }"
         :disabled="loading"
-        @tap="handleLogin"
+        @click="handleLogin"
       >
         {{ loading ? '登录中...' : '登 录' }}
       </button>
@@ -43,6 +43,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { MESSAGES, API_PATHS } from '@/config/constants'
 
 const phone = ref('')
 const loading = ref(false)
@@ -63,7 +64,7 @@ async function handleLogin() {
   try {
     const res = await new Promise((resolve, reject) => {
       uni.request({
-        url: '/api/auth/login',
+        url: `${API_PATHS.AUTH_LOGIN}`,
         method: 'POST',
         data: { phone: phone.value },
         timeout: 5000,
@@ -75,10 +76,17 @@ async function handleLogin() {
     const data = res.data as any
 
     if (data.success || data.code === 200) {
-      uni.setStorageSync('token', data.token)
-      uni.setStorageSync('userInfo', data.user || { phone: phone.value, role: 'user' })
+      const tokenData = data.data || data
+      uni.setStorageSync('token', tokenData.token)
+      if (tokenData.refreshToken) {
+        uni.setStorageSync('refreshToken', tokenData.refreshToken)
+      }
+      if (tokenData.expiresIn) {
+        uni.setStorageSync('tokenExpires', Date.now() + tokenData.expiresIn * 1000)
+      }
+      uni.setStorageSync('userInfo', tokenData.user || { phone: phone.value, role: 'user' })
 
-      uni.showToast({ title: '登录成功！', icon: 'success' })
+      uni.showToast({ title: MESSAGES.COMMON.LOGIN_SUCCESS, icon: 'success' })
 
       setTimeout(() => {
         uni.reLaunch({ url: '/pages/user/home' })
@@ -89,14 +97,14 @@ async function handleLogin() {
   } catch (error) {
     console.error('用户登录错误:', error)
 
-    uni.setStorageSync('token', 'demo-token-user-' + Date.now())
+    uni.setStorageSync('token', 'offline-token-' + phone.value + '-' + Date.now())
     uni.setStorageSync('userInfo', {
       phone: phone.value,
       role: 'user',
       name: '普通用户'
     })
 
-    uni.showToast({ title: '登录成功！（演示模式）', icon: 'success' })
+    uni.showToast({ title: MESSAGES.COMMON.LOGIN_SUCCESS_DEMO, icon: 'success' })
 
     setTimeout(() => {
       uni.reLaunch({ url: '/pages/user/home' })

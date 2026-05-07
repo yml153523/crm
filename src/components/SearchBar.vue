@@ -15,7 +15,7 @@
       <text 
         class="clear-btn" 
         v-if="modelValue && isFocused"
-        @tap.stop="handleClear"
+        @click.stop="handleClear"
       >✕</text>
     </view>
     <slot name="extra"></slot>

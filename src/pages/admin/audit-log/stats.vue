@@ -57,7 +57,7 @@
     <view class="distribution-section card">
       <view class="section-title">🥧 操作类型分布</view>
       <view class="distribution-list" v-if="actionDistribution.length">
-        <view class="distribution-item" v-for="(item, index) in actionDistribution" :key="index" @tap="filterByActionType(item.type)">
+        <view class="distribution-item" v-for="(item, index) in actionDistribution" :key="index" @click="filterByActionType(item.type)">
           <view class="dist-info">
             <view class="dist-type-badge" :class="getActionTypeClass(item.type)">
               <text>{{ getActionTypeIcon(item.type) }}</text>
@@ -78,7 +78,7 @@
     <view class="top-users-section card">
       <view class="section-header">
         <text class="section-title">👥 活跃用户 TOP10</text>
-        <text class="more-link" @tap="goToLogList">查看全部 ›</text>
+        <text class="more-link" @click="goToLogList">查看全部 ›</text>
       </view>
 
       <view class="user-list" v-if="topUsers.length">
@@ -102,19 +102,19 @@
     <view class="quick-actions card">
       <view class="section-title">⚡ 快捷操作</view>
       <view class="action-grid">
-        <view class="action-btn" @tap="goToLogList({ actionType: 'LOGIN' })">
+        <view class="action-btn" @click="goToLogList({ actionType: 'LOGIN' })">
           <text class="action-icon">🔵</text>
           <text class="action-text">登录日志</text>
         </view>
-        <view class="action-btn" @tap="goToLogList({ success: false })">
+        <view class="action-btn" @click="goToLogList({ success: false })">
           <text class="action-icon">❌</text>
           <text class="action-text">异常日志</text>
         </view>
-        <view class="action-btn" @tap="goToLogList()">
+        <view class="action-btn" @click="goToLogList()">
           <text class="action-icon">📋</text>
           <text class="action-text">全部日志</text>
         </view>
-        <view class="action-btn" @tap="refreshData">
+        <view class="action-btn" @click="refreshData">
           <text class="action-icon">🔄</text>
           <text class="action-text">刷新数据</text>
         </view>
@@ -124,6 +124,7 @@
 </template>
 
 <script setup lang="ts">
+import { MESSAGES, TOAST_ICON } from '@/config/constants'
 import { ref, computed, onMounted } from 'vue'
 import auditLogApi from '@/services/auditLogApi'
 
@@ -198,7 +199,7 @@ async function fetchStatistics() {
 
   try {
     loading.value = true
-    uni.showLoading({ title: '加载中...' })
+    uni.showLoading({ title: MESSAGES.COMMON.LOADING })
 
     const response = await auditLogApi.getStatistics()
     statsData.value = response.data || {}

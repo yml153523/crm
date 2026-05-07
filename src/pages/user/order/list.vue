@@ -4,7 +4,7 @@
     <view class="not-logged-in" v-if="notLoggedIn">
       <text class="nli-icon">🔒</text>
       <text class="nli-text">请先登录后查看订单</text>
-      <view class="nli-btn" @tap="goLogin">
+      <view class="nli-btn" @click="goLogin">
         <text class="nli-btn-text">去登录</text>
       </view>
     </view>
@@ -20,7 +20,7 @@
         :class="{ active: currentTab === tab.value }"
         v-for="tab in tabs" 
         :key="tab.value"
-        @tap="switchTab(tab.value)"
+        @click="switchTab(tab.value)"
       >
         <text>{{ tab.label }}</text>
       </view>
@@ -34,7 +34,7 @@
       @refresherrefresh="onRefresh"
     >
       <view v-if="loading && orders.length === 0" class="loading-container">
-        <text>加载中...</text>
+        <text>{{ MESSAGES.COMMON.LOADING }}</text>
       </view>
 
       <view v-else-if="orders.length > 0" class="order-list">
@@ -42,7 +42,7 @@
           class="order-card card" 
           v-for="order in orders" 
           :key="order._id"
-          @tap="goToDetail(order._id)"
+          @click="goToDetail(order._id)"
         >
           <view class="card-header">
             <text class="order-no">订单号: {{ order.orderNo }}</text>
@@ -50,32 +50,32 @@
           </view>
 
           <view class="items-preview">
-            <text class="item-text">{{ order.items?.[0]?.productName }}{{ order.items?.length > 1 ? ` 等${order.items.length}件商品` : '' }}</text>
-            <text class="amount">¥{{ order.finalAmount?.toFixed(2) || '0.00' }}</text>
+            <text class="item-text">{{ order?.items?.[0]?.productName || '商品' }}{{ (order?.items?.length && order.items.length > 1) ? ` 等${order.items.length}件商品` : '' }}</text>
+            <text class="amount">¥{{ (typeof order?.finalAmount === 'number' && !isNaN(order.finalAmount)) ? order.finalAmount.toFixed(2) : '0.00' }}</text>
           </view>
 
           <view class="actions">
             <button 
               class="action-btn btn-pay"
               v-if="order.status === 'pending_payment'"
-              @tap.stop="payOrder(order._id)"
+              @click.stop="payOrder(order._id)"
             >去支付</button>
             
             <button 
               class="action-btn btn-cancel"
               v-if="order.status === 'pending_payment'"
-              @tap.stop="cancelOrder(order._id)"
+              @click.stop="cancelOrder(order._id)"
             >取消订单</button>
 
             <button 
               class="action-btn btn-confirm"
               v-if="order.status === 'delivered'"
-              @tap.stop="confirmOrder(order._id)"
+              @click.stop="confirmOrder(order._id)"
             >确认收货</button>
 
             <button 
               class="action-btn btn-detail"
-              @tap.stop="goToDetail(order._id)"
+              @click.stop="goToDetail(order._id)"
             >查看详情</button>
           </view>
         </view>
@@ -84,7 +84,7 @@
       <view v-else class="empty-state">
         <text class="empty-icon">📦</text>
         <text class="empty-text">暂无订单</text>
-        <button class="shop-btn" @tap="goShopping">去购物</button>
+        <button class="shop-btn" @click="goShopping">去购物</button>
       </view>
 
       <view class="load-more" v-if="hasMore && !loading">
@@ -102,6 +102,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { requireLogin } from '@/utils/auth'
+import { MESSAGES, API_PATHS, TOAST_ICON } from '@/config/constants'
 
 const currentTab = ref('all')
 const loading = ref(false)
@@ -139,7 +140,7 @@ async function loadOrders() {
   
   try {
     const res = await uni.request({
-      url: '/api/orders',
+      url: `${API_PATHS.ORDERS}`,
       data: {
         page: page.value,
         pageSize,
@@ -148,18 +149,24 @@ async function loadOrders() {
     })
     
     const data = (res.data as any)?.data
-    if (data?.list) {
+    if (data?.list && Array.isArray(data.list)) {
       if (page.value === 1) {
         orders.value = data.list
       } else {
         orders.value.push(...data.list)
       }
       
-      hasMore.value = data.pagination.page < data.pagination.totalPages
+      // 安全的分页判断，防止越界
+      const pagination = data.pagination || {}
+      hasMore.value = (pagination.page || 0) < (pagination.totalPages || 0)
+    } else {
+      console.warn('订单列表：收到无效数据格式', data)
+      if (page.value === 1) orders.value = []
+      hasMore.value = false
     }
   } catch (error) {
     console.error('加载订单失败:', error)
-    uni.showToast({ title: '加载失败', icon: 'none' })
+    uni.showToast({ title: '加载失败', icon: TOAST_ICON.NONE })
   } finally {
     loading.value = false
   }
@@ -205,7 +212,7 @@ async function payOrder(orderId: string) {
         uni.showLoading({ title: '支付中...' })
         try {
           const result = await uni.request({
-            url: `/api/orders/${orderId}/pay`,
+            url: `${API_PATHS.ORDERS}/${orderId}/pay`,
             method: 'POST',
             data: { paymentMethod: 'mock' }
           })
@@ -213,16 +220,16 @@ async function payOrder(orderId: string) {
           uni.hideLoading()
           
           if ((result.data as any)?.success) {
-            uni.showToast({ title: '支付成功', icon: 'success' })
+            uni.showToast({ title: '支付成功', icon: TOAST_ICON.SUCCESS })
             setTimeout(() => {
               goToDetail(orderId)
             }, 1000)
           } else {
-            uni.showToast({ title: (result.data as any)?.message || '支付失败', icon: 'none' })
+            uni.showToast({ title: (result.data as any)?.message || '支付失败', icon: TOAST_ICON.NONE })
           }
         } catch (error) {
           uni.hideLoading()
-          uni.showToast({ title: '网络错误', icon: 'none' })
+          uni.showToast({ title: MESSAGES.COMMON.NETWORK_ERROR_SHORT, icon: TOAST_ICON.NONE })
         }
       }
     }
@@ -237,13 +244,13 @@ async function cancelOrder(orderId: string) {
       if (res.confirm) {
         try {
           await uni.request({
-            url: `/api/orders/${orderId}/cancel`,
+            url: `${API_PATHS.ORDERS}/${orderId}/cancel`,
             method: 'POST'
           })
-          uni.showToast({ title: '订单已取消', icon: 'success' })
+          uni.showToast({ title: '订单已取消', icon: TOAST_ICON.SUCCESS })
           onRefresh()
         } catch (error) {
-          uni.showToast({ title: '操作失败', icon: 'none' })
+          uni.showToast({ title: '操作失败', icon: TOAST_ICON.NONE })
         }
       }
     }
@@ -258,13 +265,13 @@ async function confirmOrder(orderId: string) {
       if (res.confirm) {
         try {
           await uni.request({
-            url: `/api/orders/${orderId}/confirm`,
+            url: `${API_PATHS.ORDERS}/${orderId}/confirm`,
             method: 'POST'
           })
-          uni.showToast({ title: '确认收货成功', icon: 'success' })
+          uni.showToast({ title: '确认收货成功', icon: TOAST_ICON.SUCCESS })
           onRefresh()
         } catch (error) {
-          uni.showToast({ title: '操作失败', icon: 'none' })
+          uni.showToast({ title: '操作失败', icon: TOAST_ICON.NONE })
         }
       }
     }
