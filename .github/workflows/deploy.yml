@@ -1,0 +1,102 @@
+name: Deploy CRM to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build User Version
+        run: npm run build:user
+        env:
+          NODE_ENV: production
+
+      - name: Build Admin Version
+        run: npm run build:admin
+        env:
+          NODE_ENV: production
+
+      - name: Create dist-user archive
+        run: tar -czf dist-user.tar.gz -C dist-user .
+
+      - name: Create dist-admin archive
+        run: tar -czf dist-admin.tar.gz -C dist-admin .
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          timeout: 60s
+          script: |
+            set -e
+            
+            echo "Starting deployment..."
+            
+            # 创建备份目录
+            BACKUP_DIR="/var/www/html/backup-$(date +%Y%m%d-%H%M%S)"
+            mkdir -p $BACKUP_DIR
+            
+            # 备份旧版本
+            if [ -d "/var/www/html/dist-user" ]; then
+              cp -r /var/www/html/dist-user $BACKUP_DIR/
+              echo "Backed up dist-user to $BACKUP_DIR"
+            fi
+            
+            if [ -d "/var/www/html/dist-admin" ]; then
+              cp -r /var/www/html/dist-admin $BACKUP_DIR/
+              echo "Backed up dist-admin to $BACKUP_DIR"
+            fi
+            
+            # 创建新目录
+            rm -rf /var/www/html/dist-user /var/www/html/dist-admin
+            mkdir -p /var/www/html/dist-user /var/www/html/dist-admin
+            
+            # 解压新版本
+            tar -xzf /tmp/dist-user.tar.gz -C /var/www/html/dist-user/
+            tar -xzf /tmp/dist-admin.tar.gz -C /var/www/html/dist-admin/
+            
+            # 设置权限
+            chmod -R 755 /var/www/html/dist-user
+            chmod -R 755 /var/www/html/dist-admin
+            
+            # 重启 nginx
+            sudo systemctl reload nginx 2>/dev/null || sudo nginx -s reload 2>/dev/null || echo "Nginx reload skipped"
+            
+            # 清理旧备份（保留最近5个）
+            cd /var/www/html
+            ls -dt backup-* | tail -n +6 | xargs -r rm -rf
+            
+            echo "Deployment completed successfully!"
+            echo "User site: http://123.56.107.111/dist-user/"
+            echo "Admin site: http://123.56.107.111/dist-admin/"
+
+      - name: Upload artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist-user.tar.gz
+            dist-admin.tar.gz
+          retention-days: 1

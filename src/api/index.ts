@@ -1,0 +1,7 @@
+export * from './request'
+export { authAPI } from './auth'
+export { userAPI } from './user'
+export { videoAPI } from './video'
+export { courseAPI } from './course'
+export { remindAPI } from './remind'
+export { statisticsAPI } from './statistics'

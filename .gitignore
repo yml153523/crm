@@ -1,0 +1,30 @@
+node_modules/
+dist/
+dist-admin/
+dist-user/
+.DS_Store
+*.local
+.env.local
+.env.*.local
+unpackage/
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS
+Thumbs.db
+
+# Screenshots & test scripts
+screenshots/
+scripts/verify-*.js
+scripts/scan-*.js
+
+# Deploy (sensitive)
+deploy.sh

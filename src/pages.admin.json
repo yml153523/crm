@@ -1,0 +1,104 @@
+{
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+    }
+  },
+  "pages": [
+    {
+      "path": "pages/admin/login",
+      "style": {
+        "navigationBarTitleText": "管理员登录"
+      }
+    },
+    {
+      "path": "pages/admin/dashboard",
+      "style": {
+        "navigationBarTitleText": "管理后台",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/admin/member/list",
+      "style": {
+        "navigationBarTitleText": "会员管理"
+      }
+    },
+    {
+      "path": "pages/admin/course/library",
+      "style": {
+        "navigationBarTitleText": "内容管理中心",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/admin/content-hub",
+      "style": {
+        "navigationBarTitleText": "内容中心",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/admin/video/list",
+      "style": {
+        "navigationBarTitleText": "视频管理"
+      }
+    },
+    {
+      "path": "pages/admin/product/list",
+      "style": {
+        "navigationBarTitleText": "商品管理"
+      }
+    },
+    {
+      "path": "pages/admin/red-packet/list",
+      "style": {
+        "navigationBarTitleText": "红包管理"
+      }
+    },
+    {
+      "path": "pages/admin/statistics/index",
+      "style": {
+        "navigationBarTitleText": "数据统计",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/admin/abtest/index",
+      "style": {
+        "navigationBarTitleText": "A/B测试"
+      }
+    },
+    {
+      "path": "pages/admin/remind/index",
+      "style": {
+        "navigationBarTitleText": "提醒管理"
+      }
+    },
+    {
+      "path": "pages/admin/audit-log/list",
+      "style": {
+        "navigationBarTitleText": "日志中心"
+      }
+    },
+    {
+      "path": "pages/admin/admin-user/list",
+      "style": {
+        "navigationBarTitleText": "管理员列表"
+      }
+    },
+    {
+      "path": "pages/admin/settings/index",
+      "style": {
+        "navigationBarTitleText": "系统设置"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "CRM管理后台",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F5F5F5"
+  }
+}

@@ -1,0 +1,106 @@
+// 用户端构建配置（8080端口 - 移动端/小程序）- 完整版
+{
+  "pages": [
+    {
+      "path": "pages/user/home",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
+      }
+    },
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/video/list",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
+      }
+    },
+    {
+      "path": "pages/user/video/player",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#000000"
+      }
+    },
+    {
+      "path": "pages/user/recharge",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
+      }
+    },
+    {
+      "path": "pages/user/product/list",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
+      }
+    },
+    {
+      "path": "pages/user/product/detail",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FFFFFF"
+      }
+    },
+    {
+      "path": "pages/user/cart/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
+      }
+    },
+    {
+      "path": "pages/user/order/create",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
+      }
+    },
+    {
+      "path": "pages/user/order/list",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
+      }
+    },
+    {
+      "path": "pages/user/order/detail",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FFFFFF"
+      }
+    },
+    {
+      "path": "pages/user/red-packet/center",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "",
+        "navigationBarBackgroundColor": "#FAFAFA"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "",
+    "navigationBarBackgroundColor": "#FAFAFA",
+    "backgroundColor": "#F5F5F5"
+  }
+}
